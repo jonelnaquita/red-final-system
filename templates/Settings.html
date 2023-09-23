@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+<html>
+<body>
+{% block content%}
+<head>
+    <link rel="stylesheet" href="static/css/custom/settings.css">
+</head>
+<div class="main-panel">
+    <div class="card">
+        <div class="card-body">
+            <h2 class="mb-2">SETTINGS</h2>
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button type="button"
+                            id="uncontrolled-tab-example-tab-profile"
+                            role="tab" data-rr-ui-event-key="profile"
+                            aria-controls="uncontrolled-tab-example-tabpane-profile"
+                            aria-selected="false"
+                            class="nav-link active">
+                        Change Email
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button type="button"
+                            id="uncontrolled-tab-example-tab-contact"
+                            role="tab"
+                            data-rr-ui-event-key="contact"
+                            aria-controls="uncontrolled-tab-example-tabpane-contact"
+                            aria-selected="false"
+                            class="nav-link"
+                            tabindex="-1">
+                        Change Password
+                    </button>
+                </li>
+            </ul>
+            <div class="tab-content">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            {% if category == 'danger' %}
+                                <div class="alert alert-fill-danger" role="alert">
+                                    <i class="ti-info-alt"></i>
+                                    {{ message }}
+                                </div>
+                            {% elif category == 'success' %}
+                                <div class="alert alert-fill-success" role="alert">
+                                    <i class="ti-info-alt"></i>
+                                    {{ message }}
+                                </div>
+                            {% elif category == 'info' %}
+                                <div class="alert alert-fill-info" role="alert">
+                                    <i class="ti-info-alt"></i>
+                                    {{ message }}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                <div role="tabpanel" id="uncontrolled-tab-example-tabpane-profile"
+                     aria-labelledby="uncontrolled-tab-example-tab-profile" class="fade test-tab tab-pane active show">
+                    <div class="card-body">
+                        <h4 class="card-title">Change Email</h4>
+                        <p class="card-description">Update your email address</p>
+                        <form class="forms-sample" method="POST">
+                            <div class="form-group">
+                                <label for="exampleInputUsername1">Current Email Address</label>
+                                <input type="email" id="exampleInputUsername1" class="form-control" name="current_email" value="{{ current_email }}" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">New Email Address</label>
+                                <input type="email" id="exampleInputEmail1" class="form-control" name="new_email" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Enter your password</label>
+                                <input type="password" class="form-control" name="current_password" required>
+                            </div>
+                            <button type="submit" class="btn btn-danger me-2">Update Email</button>
+                        </form>
+                    </div>
+                </div>
+                <div role="tabpanel" id="uncontrolled-tab-example-tabpane-contact"
+                     aria-labelledby="uncontrolled-tab-example-tab-contact" class="fade test-tab tab-pane">
+                    <div class="card-body">
+                        <h4 class="card-title">Change Password</h4>
+                        <p class="card-description">Update your password</p>
+                        <form action="/change-password" method="POST" class="forms-sample">
+                            <div class="form-group">
+                                <label for="exampleInputOldPassword">Current Password</label>
+                                <input type="password" id="exampleInputOldPassword" name="current_password" class="form-control" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="new_password">New Password</label>
+                                <input id="new_password" class="form-control " name="new_password" type="password" aria-invalid="true" onkeyup="validatePassword()" required>
+                                
+                                <!-- Add the MDI icon to each label -->
+                                <label id="length-error" class="error mt-2 text-danger">
+                                    <span class="mdi mdi-information-outline"></span> Must have more than 8 characters.
+                                </label>
+                                <label id="capital-error" class="error mt-2 text-danger">
+                                    <span class="mdi mdi-information-outline"></span> Must contain a capital letter.
+                                </label>
+                                <label id="lowercase-error" class="error mt-2 text-danger">
+                                    <span class="mdi mdi-information-outline"></span> Must contain a lowercase letter.
+                                </label>
+                                <label id="special-char-error" class="error mt-2 text-danger">
+                                    <span class="mdi mdi-information-outline"></span> Must contain a special character.
+                                </label>
+                            </div>
+                    
+                            <div class="form-group">
+                                <label for="ConfirmPassword">Re-enter your password</label>
+                                <input type="password" id="confirmPassword" name="confirm_password" class="form-control" onkeyup="validatePassword()" required>
+                                <label id="password-match-error" class="error mt-2 text-danger">
+                                    <span class="mdi mdi-information-outline"></span> Passwords do not match.
+                                </label>
+                            </div>
+                    
+                            <script>
+                                function validatePassword() {
+                                    const newPasswordInput = document.getElementById("new_password");
+                                    const confirmPasswordInput = document.getElementById("confirmPassword");
+                                    const lengthError = document.getElementById("length-error");
+                                    const capitalError = document.getElementById("capital-error");
+                                    const lowercaseError = document.getElementById("lowercase-error");
+                                    const specialCharError = document.getElementById("special-char-error");
+                                    const passwordMatchError = document.getElementById("password-match-error");
+                                    const submitButton = document.getElementById("submit-button");
+                            
+                                    const newPassword = newPasswordInput.value;
+                                    const confirmPassword = confirmPasswordInput.value;
+                            
+                                    // Define regular expressions for each condition
+                                    const minLength = 8;
+                                    const hasCapital = /[A-Z]/.test(newPassword);
+                                    const hasLowercase = /[a-z]/.test(newPassword);
+                                    const hasSpecialChar = /[!@#$%^&*()_+{}]/.test(newPassword);
+                            
+                                    // Check each condition and show/hide error labels accordingly
+                                    lengthError.style.display = newPassword.length >= minLength ? "none" : "block";
+                                    capitalError.style.display = hasCapital ? "none" : "block";
+                                    lowercaseError.style.display = hasLowercase ? "none" : "block";
+                                    specialCharError.style.display = hasSpecialChar ? "none" : "block";
+                            
+                                    // Check if passwords match and show/hide the password match error label
+                                    passwordMatchError.style.display = newPassword === confirmPassword ? "none" : "block";
+
+                                    if (
+                                        newPassword.length >= minLength &&
+                                        hasCapital &&
+                                        hasLowercase &&
+                                        hasSpecialChar &&
+                                        newPassword === confirmPassword
+                                    ) {
+                                        submitButton.disabled = false; // Enable the button
+                                    } else {
+                                        submitButton.disabled = true; // Disable the button
+                                    }
+                                }
+                            </script>
+                            
+                            
+                            
+                            <button type="submit" class="btn btn-danger me-2" id="submit-button" disabled>Update Password</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="static/vendors/jquery-toast-plugin/jquery.toast.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+
+<!-- plugins:js -->
+<script src="static/vendors/js/vendor.bundle.base.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script>
+    toastr.options = {
+    "closeButton": true,
+    "debug": true,
+    "newestOnTop": false,
+    "progressBar": false,
+    "positionClass": "toast-top-right",
+    "preventDuplicates": false,
+    "onclick": null,
+    "showDuration": "300",
+    "hideDuration": "1000",
+    "timeOut": "5000",
+    "extendedTimeOut": "1000",
+    "showEasing": "swing",
+    "hideEasing": "linear",
+    "showMethod": "fadeIn",
+    "hideMethod": "fadeOut"
+    }
+</script>
+
+<script>
+ // Get all the tab buttons and tab panes
+ const tabButtons = document.querySelectorAll('.nav-tabs button');
+ const tabPanes = document.querySelectorAll('.tab-content .tab-pane');
+
+ // Add click event listener to each tab button
+ tabButtons.forEach(button => {
+ button.addEventListener('click', () => {
+     // Get the data-rr-ui-event-key attribute value of the clicked button
+     const targetTab = button.getAttribute('data-rr-ui-event-key');
+
+     // Hide all tab panes
+     tabPanes.forEach(pane => {
+     pane.classList.remove('active', 'show');
+     });
+
+     // Show the corresponding tab pane
+     const activePane = document.getElementById('uncontrolled-tab-example-tabpane-' + targetTab);
+     if (activePane) {
+     activePane.classList.add('active', 'show');
+     }
+
+     // Update the "aria-selected" attribute for the tab buttons
+     tabButtons.forEach(btn => {
+     const isActive = btn === button;
+     btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+     btn.classList.toggle('active', isActive);
+     });
+
+     // Close the alert
+     if (document.querySelector('.alert')) {
+         document.querySelector('.alert').remove();
+     }
+ });
+ });
+</script>
+{% endblock %}
+
+</body>
+</html>

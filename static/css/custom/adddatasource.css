@@ -1,0 +1,80 @@
+ /* Custom CSS to set active color for the buttons */
+ .btn.active {
+    background-color: #CE1E2D;
+    color: #ffffff;
+}
+
+.btn-danger{
+    background-color: #CE1E2D;
+    color: #ffffff;
+}
+
+.ck-editor__editable {
+    max-height: 400px; /* Set your desired height here */
+    min-height: 200px;
+}
+
+.add-more-btn{
+  width: 100%;
+}
+
+.mdi-no-padding {
+  margin: 0; /* Remove the default margin */
+}
+
+.data-source {
+display: none; /* Initially hide all data source divs */
+}
+
+.data-source.active {
+    display: block; /* Show the active data source div */
+}
+
+.container-file-upload {
+  background-color: #ffffff;
+  width: 100%;
+  position: relative;
+  margin: 3.12em auto;
+  padding: 3.12em 1.25em;
+  border-radius: 0.43em;
+  border: 2px solid #CE1E2D; /* Replace #007bff with your desired border color */
+  padding: 20px;
+  border-style: dashed
+}
+
+input[type="file"] {
+  display: none;
+}
+
+.file-input-lbl {
+  display: block;
+  position: relative;
+  font-size: 1.12em;
+  font-weight: 500;
+  text-align: center;
+  padding: 1.12em 0;
+  margin: auto;
+  border-style: dashed;
+  border-radius: 0.31em;
+  cursor: pointer;
+}
+
+#num-of-files {
+  font-weight: 400;
+  text-align: center;
+  margin: 1.25em 0 1.87em 0;
+}
+
+ul {
+  list-style-type: none;
+}
+.container-file-upload li {
+  font-weight: 500;
+  background-color: #eff5ff;
+  color: #025bee;
+  margin-bottom: 1em;
+  padding: 1.1em 1em;
+  border-radius: 0.3em;
+  display: flex;
+  justify-content: space-between;
+}

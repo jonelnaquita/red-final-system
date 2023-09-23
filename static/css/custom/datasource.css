@@ -1,0 +1,14 @@
+.btn-add-new{
+  background-color: #CE1E2D;
+  color: #ffffff;
+}
+
+.nav-pills .nav-item .active{
+  background-color: #CE1E2D;
+}
+
+.truncate-text {
+  max-width: 100%; /* Adjust the maximum width as needed */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

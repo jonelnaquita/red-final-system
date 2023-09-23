@@ -1,0 +1,15 @@
+.input-with-toggle {
+    position: relative;
+}
+
+.input-with-toggle input {
+    padding-right: 35px; /* Adjust the value as needed to make space for the icon */
+}
+
+.input-with-toggle .toggle {
+    position: absolute;
+    right: 10px; /* Adjust the value as needed to position the icon */
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+}
