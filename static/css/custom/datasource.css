@@ -3,6 +3,11 @@
   color: #ffffff;
 }
 
+.btn-danger{
+  background-color: #CE1E2D;
+  color: #ffffff;
+}
+
 .nav-pills .nav-item .active{
   background-color: #CE1E2D;
 }

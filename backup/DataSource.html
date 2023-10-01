@@ -48,12 +48,12 @@
                           </div>
                         </div>
                       </div>
-                      <div class="row statistics d-none">
+                    <div class="row statistics d-none">
                         <div class="col-md-4 mb-4">
                             <div class="statistics-details d-flex flex-column align-items-center bg-inverse-success rounded-container p-4">
                                 <div>
                                     <p class="statistics-title">Total Sources</p>
-                                    <h3 class="rate-percentage">{{ total_sources }}</h3>
+                                    <h3 class="rate-percentage">0</h3>
                                 </div>
                             </div>
                         </div>
@@ -61,7 +61,7 @@
                             <div class="statistics-details d-flex flex-column align-items-center bg-inverse-info rounded-container p-4">
                                 <div>
                                     <p class="statistics-title">Processed</p>
-                                    <h3 class="rate-percentage">{{ processed }}</h3>
+                                    <h3 class="rate-percentage">0</h3>
                                 </div>
                             </div>
                         </div>
@@ -69,11 +69,11 @@
                             <div class="statistics-details d-flex flex-column align-items-center bg-inverse-danger rounded-container p-4">
                                 <div>
                                     <p class="statistics-title">Error</p>
-                                    <h3 class="rate-percentage">{{ error }}</h3>
+                                    <h3 class="rate-percentage">0</h3>
                                 </div>
                             </div>
                         </div>
-                    </div>                    
+                    </div>
                     <div class="tab-content" id="pills-tabContent">
                         <div class="tab-pane fade" id="pills-home" role="tabpanel" aria-labelledby="text-tab">
                             <!--Text Tab Content Here-->
@@ -179,7 +179,7 @@
                                                     <i class="mdi mdi-dots-vertical menu-icon"></i>
                                                 </button>
                                                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                                                    <button type="button" class="dropdown-item edit-button" data-bs-toggle="modal" data-bs-target="#editFAQ" data-id="{{ row.id }}" data-question="{{ row.dataFAQQuestion }}" data-answer="{{ row.dataFAQAnswer }}">Edit</button>
+                                                    <button type="button" class="dropdown-item edit-button" data-bs-toggle="modal" data-bs-target="#editFAQ" data-question="{{ row.dataFAQQuestion }}" data-answer="{{ row.dataFAQAnswer }}">Edit</button>
                                                 </div>
                                             </div>
                                         </td>
@@ -230,7 +230,7 @@
                         <span aria-hidden="true">×</span>
                     </button>
                 </div>
-                <form method="POST" id="edit-text-form">
+                <form action="/edit-text-vector" method="POST" id="edit-text-form">
                     <input type="hidden" name="textId" id="textId"> <!-- Add this hidden input field -->
                     <div class="modal-body">
                         <div class="form-group">
@@ -251,34 +251,32 @@
 
       <div class="modal fade" id="editFAQ" tabindex="-1" aria-labelledby="ModalLabel" aria-hidden="true" style="display: none;">
         <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="ModalLabel">Update Data Source</h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <form id="edit-faq-form" method="POST"> <!-- Added id to the form -->
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="questions"><b>Question:</b></label>
-                            <input type="text" name="questions" class="form-control" id="questions" placeholder="Enter the Question" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="FAQEditor"><b>Answer:</b></label>
-                            <textarea name="answers" id="FAQEditor" rows="10"></textarea>
-                        </div>
-                        <input type="hidden" name="faqID" id="faqID"> <!-- Add this hidden input field -->
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-danger">Submit</button> <!-- Change to type="submit" -->
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                    </div>
-                </form>
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="ModalLabel">Update Data Source</h5>
+              <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">×</span>
+              </button>
             </div>
+            <form>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="exampleInputPassword1"><b>Question:</b></label>
+                    <input type="text" name="questions" class="form-control" id="questions" placeholder="Enter the Question" Required>
+                </div>
+                <div class="form-group">
+                    <label for="editor2"><b>Answer:</b></label>
+                    <textarea name="updateFAQ" id="FAQEditor" rows="10"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger">Submit</button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+            </div>
+            </form>
+          </div>
         </div>
-    </div>
-    
+      </div>
 {% endblock %}
 </body>
 
@@ -447,67 +445,15 @@
             $('#pills-home').addClass('show active');
         }
     });
+    
 </script>
 
-<!--Update FAQ Data Source-->
-    
-<script>
-    $(document).ready(function () {
-        $('#table-faq').on('click', '.edit-button', function () {
-            var faqID = $(this).data('id');
-            $('#faqID').val(faqID); // Set the FAQ ID input field
-            console.log('faqID:', faqID); // Add this line for debugging
-        });
-    
-        // Function to show toastr message
-        function showToastrMessage(message) {
-            toastr.success(message);
-        }
-    
-        // Update Data from a Text
-        $('#edit-faq-form').submit(function (event) {
-            event.preventDefault();
-            var formData = new FormData(this);
-    
-            // Add console.log statements to check values
-            var faqID = formData.get('faqID');
-            var question = formData.get('questions');
-            var answer = formData.get('answers');
-            console.log('faqID:', faqID);
-            console.log('question:', question);
-            console.log('answer:', answer);
-    
-            fetch("/edit-faq-vector", {
-                method: "POST",
-                body: formData,
-            })
-            .then(function (response) {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    throw new Error("Error completing the process.");
-                }
-            })
-            .then(function (data) {
-                showToastrMessage(data.message);
-                $('#editFAQ').modal('hide');
-                window.location.reload();
-            })
-            .catch(function (error) {
-                console.error(error);
-            });
-        });
-    
-        // Check if the hash is set to "text-tab" and activate it
-        if (window.location.hash === '#text-tab') {
-            $('#pills-tab a[href="#pills-profile"]').removeClass('active');
-            $('#pills-tab a[href="#pills-home"]').addClass('active');
-            $('#pills-profile').removeClass('show active');
-            $('#pills-home').addClass('show active');
-        }
-    });    
-</script>
 
+
+
+
+    
+    
 {% endblock %}
 
 </html>

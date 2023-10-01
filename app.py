@@ -36,7 +36,7 @@ load_dotenv()
 PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
 PINECONE_ENV = os.getenv('PINECONE_ENV')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-INDEX_NAME = "red-chatbot"
+INDEX_NAME = "red-chatbot-final"
 EMBEDDING_MODEL ="text-embedding-ada-002"
 
 # Initialize Pinecone
@@ -113,7 +113,20 @@ def managedatasource():
     dataFAQ = cursor1.fetchall()
     cursor1.close()
     
-    return render_template('DataSource.html', data = dataText, dataFAQ = dataFAQ)
+    # Fetch data from the MySQL database for total sources, processed, and error
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT COUNT(*) AS total_sources FROM tbldata")
+    total_sources = cursor.fetchone()['total_sources']
+
+    cursor.execute("SELECT COUNT(*) AS processed FROM tbldocuments WHERE status = 'Processed'")
+    processed = cursor.fetchone()['processed']
+
+    cursor.execute("SELECT COUNT(*) AS error FROM tbldocuments WHERE status = 'Error'")
+    error = cursor.fetchone()['error']
+    
+    cursor.close()
+    
+    return render_template('DataSource.html', data = dataText, dataFAQ = dataFAQ, total_sources=total_sources, processed=processed, error=error)
 
 #Delete Text Data
 @app.route('/delete_selected', methods=['POST'])
@@ -288,40 +301,181 @@ def save_text():
     if request.method == 'POST':
         dataSource = "Text"
         text = request.form['textarea']
-        status = "Processed"
 
         text = removeStyles(text)
         text_data.append(text)
-        
-        # Index text data in Pinecone
-        text_store = Pinecone.from_texts(text_data, embeddings, index_name=INDEX_NAME)
 
-        # Create an OpenAI embedding
-        test_bed = openai.Embedding.create(
-            input=[
-                text  # Use the text variable here
-            ],
-            engine=EMBEDDING_MODEL
-        )
+        try:
+            # Index text data in Pinecone
+            text_store = Pinecone.from_texts(text_data, embeddings, index_name=INDEX_NAME)
 
-        test_vector = test_bed['data'][0]['embedding']
+            # Create an OpenAI embedding
+            test_bed = openai.Embedding.create(
+                input=[
+                    text  # Use the text variable here
+                ],
+                engine=EMBEDDING_MODEL
+            )
 
-        # Query Pinecone for similar vectors
-        index = pinecone.Index(INDEX_NAME)
-        data_from_pc = index.query(vector=test_vector, top_k=3, include_values=True)
-        vectorID = data_from_pc['matches'][0]['id']
+            test_vector = test_bed['data'][0]['embedding']
+
+            # Query Pinecone for similar vectors
+            index = pinecone.Index(INDEX_NAME)
+            data_from_pc = index.query(vector=test_vector, top_k=3, include_values=True)
+            vectorID = data_from_pc['matches'][0]['id']
+
+            characters = len(text)
+            status = "Processed"
+
+            # Create a query to save in MySQL
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor.execute("INSERT INTO tbldata (vectorID, dataSource, dataText, characters, status) VALUES (%s, %s, %s, %s, %s)",(vectorID, dataSource, text, characters, status))
+            mysql.connection.commit()
+
+            # Insert "Processed" status into tbldocuments
+            cursor1 = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor1.execute("INSERT INTO tbldocuments (status) VALUES (%s)", (status,))
+            mysql.connection.commit()
+            cursor1.close()
+
+            return jsonify({"message": "Data source added successfully"})
+
+        except Exception as e:
+            # Handle exceptions and insert "Error" status into tbldocuments
+            status = "Error"
+            cursor1 = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor1.execute("INSERT INTO tbldocuments (status) VALUES (%s)", (status,))
+            mysql.connection.commit()
+            cursor1.close()
+            return jsonify({"message": f"An error occurred: {str(e)}"})
+
+    return "Invalid request"
+
+
+# Update Data from a Text
+@app.route('/edit-text-vector', methods=['POST'])
+def editTextData():
+    if request.method == 'POST':
+        text_id = request.form['textId']  # Get the ID from the form
+        text = request.form['updateText']
+
+        text = removeStyles(text)
+        text_data.append(text)
 
         characters = len(text)
 
-        # Create a query to save in MySQL
+        # Create a query to save in MySQL with the ID in the WHERE clause
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("INSERT INTO tbldata (vectorID, dataSource, dataText, characters, status) VALUES (%s, %s, %s, %s, %s)", (vectorID, dataSource, text, characters, status))
+        cursor.execute("UPDATE tbldata SET dataText = %s, characters = %s WHERE id = %s", (text, characters, text_id))
         mysql.connection.commit()
         cursor.close()
 
-        return jsonify({"message": "Data source added successfully"})
+        # Retrieve the updated data from MySQL
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT dataText, vectorID FROM tbldata WHERE id = %s", (text_id,))
+        row = cursor.fetchone()  # Fetch one row
+
+        if row:
+            updated_text = row['dataText']
+            vectorID = row['vectorID']
+        else:
+            # Handle the case where no row was found for the given id
+            updated_text = None
+            vectorID = None
+
+        cursor.close()
+
+        if vectorID:
+            try:
+                # Update the data in the Pinecone vector database
+                test_bed = openai.Embedding.create(
+                    input=[
+                        updated_text
+                    ],
+                    engine=EMBEDDING_MODEL
+                )
+
+                test_vector = test_bed['data'][0]['embedding']
+
+                # Query Pinecone for similar vectors
+                index = pinecone.Index(INDEX_NAME)
+                index.update(id=vectorID, values=test_vector, set_metadata={'text': updated_text})
+
+                return jsonify({"message": "Data source updated successfully"})
+            except Exception as e:
+                return jsonify({"message": f"Error updating data in Pinecone: {str(e)}"})
+        else:
+            return jsonify({"message": "No vectorID found for the given id. Cannot update data in Pinecone."})
 
     return "Invalid request"
+
+
+# Update Data from a Text
+@app.route('/edit-faq-vector', methods=['POST'])
+def editFAQData():
+    if request.method == 'POST':
+        faq_id = request.form['faqID']
+        question = request.form['questions']
+        answer = request.form['answers']
+
+        answer = removeStyles(answer)
+
+        # Concatenate the question and answer to create faq_text
+        faqQuestion = "Question"
+        faqAnswer = "Answer"
+        faq_text = f"{faqQuestion}: {question} {faqAnswer}: {answer}"
+        
+        characters = len(faq_text)
+
+        # Update the question and answer in MySQL
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("UPDATE tbldata SET dataFAQQuestion = %s, dataFAQAnswer = %s, characters = %s WHERE id = %s", (question, answer, characters, faq_id))
+        mysql.connection.commit()
+        cursor.close()
+
+        # Retrieve the updated data from MySQL
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT dataFAQQuestion, dataFAQAnswer, vectorID FROM tbldata WHERE id = %s", (faq_id,))
+        row = cursor.fetchone()
+
+        if row:
+            updated_question = row['dataFAQQuestion']
+            updated_answer = row['dataFAQAnswer']
+            vectorID = row['vectorID']
+        else:
+            updated_question = None
+            updated_answer = None
+            vectorID = None
+
+        cursor.close()
+
+        if updated_question is not None and updated_answer is not None:
+            # Concatenate the updated question and answer to create faq_text
+            updated_faq_text = f"{faqQuestion}: {updated_question} {faqAnswer}: {updated_answer}"
+
+            try:
+                # Update the data in the Pinecone vector database
+                test_bed = openai.Embedding.create(
+                    input=[
+                        updated_faq_text
+                    ],
+                    engine=EMBEDDING_MODEL
+                )
+
+                test_vector = test_bed['data'][0]['embedding']
+
+                # Query Pinecone for similar vectors
+                index = pinecone.Index(INDEX_NAME)
+                index.update(id=vectorID, values=test_vector, set_metadata={'text': updated_faq_text})
+
+                return jsonify({"message": "Data source updated successfully"})
+            except Exception as e:
+                return jsonify({"message": f"Error updating data in Pinecone: {str(e)}"})
+        else:
+            return jsonify({"message": "No question and answer found for the given id. Cannot update data in Pinecone."})
+
+    return "Invalid request"
+
 
 
 #Insert data from a FAQ
@@ -331,52 +485,69 @@ def save_faq():
         question = request.form['questions']
         answer = request.form['answers']
         dataSource = "FAQ"
-        status = "Processed"
+        office = request.form['selectOffice']  # Get the selected office value
 
-        # Check if both question and answer are provided
-        if not question or not answer:
-            return jsonify({"error": "Both question and answer must be provided"})
+        try:
+            # Check if both question and answer are provided
+            if not question or not answer:
+                return jsonify({"error": "Both question and answer must be provided"})
 
-        # Create a unique identifier for this FAQ (e.g., using a prefix)
-        faqQuestion = "Question"
-        faqAnswer = "Answer"
+            # Create a unique identifier for this FAQ (e.g., using a prefix)
+            faqQuestion = "Question"
+            faqAnswer = "Answer"
 
-        answer = removeStyles(answer)
-        # Append the FAQ to the text_data list
-        faq_text = f"{faqQuestion}: {question} {faqAnswer}: {answer}"
-        text_data.append(faq_text)
-        text_store = Pinecone.from_texts([faq_text], embeddings, index_name=INDEX_NAME)
+            answer = removeStyles(answer)
+            # Append the FAQ to the text_data list
+            faq_text = f"{faqQuestion}: {question} {faqAnswer}: {answer}"
+            text_data.append(faq_text)
+            text_store = Pinecone.from_texts([faq_text], embeddings, index_name=INDEX_NAME)
+            
+            # Create an OpenAI embedding
+            test_bed = openai.Embedding.create(
+                input=[
+                    faq_text
+                ],
+                engine=EMBEDDING_MODEL
+            )
+
+            test_vector = test_bed['data'][0]['embedding']
+
+            # Query Pinecone for similar vectors
+            index = pinecone.Index(INDEX_NAME)
+            data_from_pc = index.query(vector=test_vector, top_k=3, include_values=True)
+            vectorID = data_from_pc['matches'][0]['id']
+
+            characters = len(faq_text)
+            status = "Processed"
+
+            # Create a query to save in MySQL
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor.execute("INSERT INTO tbldata (vectorID, dataSource, dataFAQQuestion, dataFAQAnswer, characters, status, office) VALUES (%s, %s, %s, %s, %s, %s, %s)", (vectorID, dataSource, question, removeStyles(answer), characters, status, office))
+            mysql.connection.commit()
+            cursor.close()
+            
+            # Insert "Processed" status into tbldocuments
+            cursor1 = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor1.execute("INSERT INTO tbldocuments (status) VALUES (%s)", (status,))
+            mysql.connection.commit()
+            cursor1.close()
+
+            return jsonify({"message": "FAQ saved successfully"})
         
-        # Create an OpenAI embedding
-        test_bed = openai.Embedding.create(
-            input=[
-                faq_text
-            ],
-            engine=EMBEDDING_MODEL
-        )
-
-        test_vector = test_bed['data'][0]['embedding']
-
-        # Query Pinecone for similar vectors
-        index = pinecone.Index(INDEX_NAME)
-        data_from_pc = index.query(vector=test_vector, top_k=3, include_values=True)
-        vectorID = data_from_pc['matches'][0]['id']
-
-        characters = len(faq_text)
-
-        # Create a query to save in MySQL
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("INSERT INTO tbldata (vectorID, dataSource, dataFAQQuestion, dataFAQAnswer, characters, status) VALUES (%s, %s, %s, %s, %s, %s)", (vectorID, dataSource, question, removeStyles(answer), characters, status))
-        mysql.connection.commit()
-        cursor.close()
-
-        return jsonify({"message": "FAQ saved successfully"})
-
+        except Exception as e:
+            # Handle exceptions and insert "Error" status into tbldocuments
+            status = "Error"
+            cursor1 = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor1.execute("INSERT INTO tbldocuments (status) VALUES (%s)", (status,))
+            mysql.connection.commit()
+            cursor1.close()
+            return jsonify({"message": f"An error occurred: {str(e)}"})
+        
     return "Invalid request"
 
 
 #Handle Conversation for Dialogflow
-@app.route('/dialogflow', methods=['POST'])
+@app.route('/dialogflow-webhook', methods=['POST'])
 def handle_dialogflow():
     data = request.get_json()
     

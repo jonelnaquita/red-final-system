@@ -22,7 +22,6 @@
                 <div class="form-group">
                   <a class="btn btn-outline-danger btn-data-source btn-fw me-2 active" onclick="setActiveButton(1); showDiv('text')"><i class="mdi mdi-format-list-bulleted me-2"></i>Text</a>
                   <a class="btn btn-outline-danger btn-data-source btn-fw me-2" onclick="setActiveButton(2); showDiv('faq')"><i class="mdi mdi-help-circle-outline me-2"></i>FAQ</a>
-                  <a class="btn btn-outline-danger btn-data-source btn-fw me-2" onclick="setActiveButton(3); showDiv('documents')"><i class="mdi mdi-file-document me-2"></i>Documents</a>
                 </div>
               </div>
 
@@ -52,22 +51,41 @@
                 </p>
                 <form action="/save-faq" method="post" id="faq-form">
                     <div class="faq-inputs">
-                        <div class="form-group">
-                            <label for="exampleInputPassword1"><b>Question:</b></label>
-                            <input type="text" name="questions" class="form-control" id="questions" placeholder="Enter the Question" Required>
+                        <div class="row">
+                          <div class="col-md-9">
+                            <div class="form-group">
+                              <label for="exampleInputPassword1"><b>Question:</b></label>
+                              <input type="text" name="questions" class="form-control" id="questions" placeholder="Enter the Question" Required>
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <div class="form-group">
+                              <label for="exampleInputPassword1"><b>Office of Concern</b></label>
+                              <select class="form-select" name="selectOffice" aria-label="Default select example" required>
+                                <option selected>Select Office</option>
+                                <option value="Registrar">Registrar</option>
+                                <option value="TAO">TAO</option>
+                                <option value="Colleges">Colleges</option>
+                                <option value="Clinic">Clinic</option>
+                                <option value="SOA">SOA</option>
+                                <option value="Scholarship">Scholarship</option>
+                                <option value="Accounting">Accounting</option>
+                                <option value="Cashier">Cashier</option>
+                                <option value="ICT Services">ICT Services</option>
+                                <option value="Guidance">Guidance</option>
+                                <option value="RGO">RGO</option>
+                                <option value="Library">Library</option>
+                              </select>
+                            </div>
+                          </div>
                         </div>
+                        
                         <div class="form-group">
                             <label for="editor2"><b>Answer:</b></label>
-                            <textarea name="answers" id="editor2" rows="100"></textarea>
+                            <textarea name="answers" id="FAQEditor" rows="100"></textarea>
                         </div>
                         <p id="faq-message" style="display: none; margin-top: 20px;"><i class="mdi mdi-help-circle-outline" style="margin-right: 5px;"></i>Enter the text</p>
-                        <!--<div class="progress progress-lg" id="faq-progress-bar" style="margin-top: 20px;">
-                          <div class="progress-bar bg-danger" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0% completed</div>
-                        </div>-->
                     </div>
-                    <!--<button type="button" class="btn btn-inverse-success btn-fw add-more-btn btn-sm" onclick="addMoreFaqInputs()">
-                        <i class="mdi mdi-plus me-2"></i>Add More
-                    </button>-->
                     <button type="submit" class="btn btn-danger mt-2" id="faq-submit-button">
                       <span class="spinner-border spinner-border-sm visually-hidden" role="status" aria-hidden="true"></span>
                       Submit
@@ -75,27 +93,6 @@
                 </form>
             </div>
 
-              <!-- Documents upload Data Source -->
-              <div id="documents-data-source" class="data-source">
-                <!-- Content for the "Documents" button goes here -->
-                <p class="card-description">
-                    Upload and train the chatbot on your documents.
-                </p>
-                <li class="card-description">Supported files: PDF (more coming soon)</li>
-                <li class="card-description">Max. 5 files at a time</li>
-                <li class="card-description">File size: 1 MB per file</li>
-
-                <div class="container-file-upload">
-                  <input type="file" id="file-input" multiple accept=".pdf"/>
-                  <label for="file-input" class="file-input-lbl btn-inverse-success btn-fw">
-                    <i class="fa-solid fa-arrow-up-from-bracket"></i>
-                    &nbsp; Choose Files To Upload
-                  </label>
-                  <div id="num-of-files">No Files Chosen</div>
-                  <ul id="files-list"></ul>
-                </div>
-              </div>
-              
             </div>
           </div>
       </div>
@@ -121,28 +118,6 @@
 </script>
 
 <script>
-    ClassicEditor
-        .create( document.querySelector( '#editor' ), {
-            toolbar: {
-                items: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'alignment', 'undo', 'redo']
-            }
-        })
-        .catch( error => {
-            console.error( error );
-        });
-
-    ClassicEditor
-        .create( document.querySelector( '#editor2' ), {
-            toolbar: {
-                items: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'alignment', 'undo', 'redo']
-            }
-        })
-        .catch( error => {
-            console.error( error );
-        });
-</script>
-
-<script>
     function showDiv(source) {
         const dataSources = document.querySelectorAll('.data-source');
         dataSources.forEach(sourceDiv => {
@@ -154,179 +129,137 @@
     }
 </script>
 
-<script>
-  function addMoreFaqInputs() {
-      const faqInputs = document.querySelector('.faq-inputs');
-      const faqData = faqInputs.cloneNode(true);
-
-      // Clear the values of the input and textarea fields in the cloned node
-      const inputFields = faqData.querySelectorAll('input, textarea');
-      inputFields.forEach((field) => {
-          field.value = ''; // Clear the value
-      });
-
-      const deleteButton = document.createElement('button');
-      deleteButton.type = 'button';
-      deleteButton.classList.add('btn', 'btn-danger', 'btn-sm', 'mb-2');
-      deleteButton.textContent = 'Delete';
-      deleteButton.onclick = function () {
-          faqData.remove();
-      };
-      faqData.appendChild(deleteButton);
-      faqInputs.parentElement.insertBefore(faqData, document.querySelector('.add-more-btn'));
-  }
-</script>
-
-
-<script>
-  let fileInput = document.getElementById("file-input");
-  let fileList = document.getElementById("files-list");
-  let numOfFiles = document.getElementById("num-of-files");
-
-  fileInput.addEventListener("change", () => {
-    fileList.innerHTML = "";
-    numOfFiles.textContent = `${fileInput.files.length} Files Selected`;
-
-    for (i of fileInput.files) {
-      let reader = new FileReader();
-      let listItem = document.createElement("li");
-      let fileName = i.name;
-      let fileSize = (i.size / 1024).toFixed(1);
-      listItem.innerHTML = `<p>${fileName}</p><p>${fileSize}KB</p>`;
-      if (fileSize >= 1024) {
-        fileSize = (fileSize / 1024).toFixed(1);
-        listItem.innerHTML = `<p>${fileName}</p><p>${fileSize}MB</p>`;
-      }
-      fileList.appendChild(listItem);
-    }
-  });
-
-</script>
-
-<script>
-  document.getElementById('file-input').addEventListener('change', handleFileSelect);
-
-  function handleFileSelect(event) {
-    const files = event.target.files;
-    const fileCount = files.length;
-    const fileList = document.getElementById('files-list');
-    fileList.innerHTML = '';
-
-    if (fileCount > 5) {
-      toastr.error('You can only upload 5 PDF files at a time!');
-      return;
-    }
-
-    for (let i = 0; i < fileCount; i++) {
-      const file = files[i];
-      const fileType = file.type;
-      if (fileType !== 'application/pdf') {
-        toastr.error('Upload PDF files only!');
-        return;
-      }
-
-      const listItem = document.createElement('li');
-      listItem.textContent = file.name;
-      fileList.appendChild(listItem);
-    }
-
-    document.getElementById('num-of-files').textContent = fileCount === 0 ? 'No Files Chosen' : `${fileCount} File(s) Chosen`;
-  }
-</script>
-
 <!--Text FORM-->
 <script>
-  document.getElementById("text-form").addEventListener("submit", function (event) {
+  var ckEditorInstanceText;
+
+  document.addEventListener("DOMContentLoaded", function () {
+    ClassicEditor
+      .create(document.querySelector('#editor'), {
+        toolbar: {
+          items: ['bold', 'italic', 'link', 'bulletedList', 'numberedList', 'alignment', 'undo', 'redo']
+        }
+      })
+      .then(function (editor) {
+        ckEditorInstanceText = editor; // Store the CKEditor instance for later use
+      })
+      .catch(function (error) {
+        console.error(error);
+      });
+
+    document.getElementById("text-form").addEventListener("submit", function (event) {
       event.preventDefault(); // Prevent the form from submitting normally
 
       const textarea = document.getElementById("editor");
       const message = document.getElementById("message");
-      const textSubmitButton = document.getElementById("text-submit-button");  
+      const textSubmitButton = document.getElementById("text-submit-button");
 
       if (textarea.value.trim() === "") {
-          // If the textarea is empty, display the message and don't proceed with the form submission
-          message.style.display = "block";
+        message.style.display = "block";
       } else {
-          // If there is text in the textarea, proceed with the form submission
-          message.style.display = "none"; // Hide the message
-          textSubmitButton.disabled = true; // Disable the submit button
-          textSubmitButton.querySelector(".spinner-border").classList.remove("visually-hidden"); // Show the spinner
+        message.style.display = "none"; // Hide the message
+        textSubmitButton.disabled = true; // Disable the submit button
+        textSubmitButton.querySelector(".spinner-border").classList.remove("visually-hidden"); // Show the spinner
 
-          // Make an AJAX request to save the text
-          fetch("/save-text-vector", {
-              method: "POST",
-              body: new FormData(document.getElementById("text-form")),
+        fetch("/save-text-vector", {
+          method: "POST",
+          body: new FormData(document.getElementById("text-form")),
+        })
+          .then(function (response) {
+            if (response.ok) {
+              return response.json();
+            } else {
+              throw new Error("Error saving text.");
+            }
           })
-              .then(function (response) {
-                  if (response.ok) {
-                      return response.json();
-                  } else {
-                      throw new Error("Error saving text.");
-                  }
-              })
-              .then(function (data) {
-                  textarea.value = '';
-                  textSubmitButton.disabled = false;
-                  textSubmitButton.querySelector(".spinner-border").classList.add("visually-hidden");
+          .then(function (data) {
+            ckEditorInstanceText.setData(''); // Clear the CKEditor content
 
-                  toastr.success(data.message);
-              })
-              .catch(function (error) {
-                  console.error(error);
-              });
+            textSubmitButton.disabled = false;
+            textSubmitButton.querySelector(".spinner-border").classList.add("visually-hidden");
+
+            toastr.success(data.message);
+          })
+          .catch(function (error) {
+            console.error(error);
+          });
       }
+    });
   });
 </script>
 
 
 <!--FAQs FORM-->
 <script>
-  document.getElementById("faq-form").addEventListener("submit", function (event) {
-      event.preventDefault(); // Prevent the form from submitting normally
-
-      const faq_questions = document.getElementById("questions")
-      const faq_textarea = document.getElementById("editor2");
-      const faq_message = document.getElementById("faq-message");
-      const submitButton = document.getElementById("faq-submit-button");  
-
-      if (faq_textarea.value.trim() === "") {
-          // If the textarea is empty, display the message and don't proceed with the form submission
-          faq_message.style.display = "block";
-      } else {
-          // If there is text in the textarea, proceed with the form submission
-          faq_message.style.display = "none"; // Hide the message
-          submitButton.disabled = true; // Disable the submit button
-          submitButton.querySelector(".spinner-border").classList.remove("visually-hidden"); // Show the spinner
-
-
-          // Make an AJAX request to save the text
-          fetch("/save-faq", {
-              method: "POST",
-              body: new FormData(document.getElementById("faq-form")),
-          })
-              .then(function (response) {
-                  if (response.ok) {
-                      return response.json();
-                  } else {
-                      throw new Error("Error saving text.");
-                  }
-              })
-              .then(function (data) {
-                  submitButton.disabled = false;
-                  submitButton.querySelector(".spinner-border").classList.add("visually-hidden");
-
-                  toastr.success(data.message);
-
-                  // Clear the text in the textarea and question input
-                  faq_textarea.value = "";
-                  faq_questions.value = "";
-              })
-              .catch(function (error) {
-                  console.error(error);
-              });
-      }
+  var ckEditorInstance;
+  
+  document.addEventListener("DOMContentLoaded", function () {
+    // Initialize CKEditor within the 'FAQEditor' element
+    ClassicEditor
+      .create(document.querySelector('#FAQEditor'), {
+        toolbar: {
+          items: ['bold', 'italic', 'link', 'bulletedList', 'numberedList', 'alignment', 'undo', 'redo']
+        }
+      })
+      .then(function (editor) {
+        ckEditorInstance = editor; // Store the CKEditor instance for later use
+      })
+      .catch(function (error) {
+        console.error(error);
+      });
   });
+
+  document.getElementById("faq-form").addEventListener("submit", function (event) {
+    event.preventDefault(); // Prevent the form from submitting normally
+  
+    const faq_questions = document.getElementById("questions");
+    const faq_textarea = document.getElementById("FAQEditor");
+    const faq_message = document.getElementById("faq-message");
+    const submitButton = document.getElementById("faq-submit-button");
+  
+    // Validate the form inputs
+    if (faq_textarea.value.trim() === "") {
+      // If the textarea is empty, display the message and don't proceed with the form submission
+      faq_message.style.display = "block";
+    } else {
+      // If there is text in the textarea, proceed with the form submission
+      faq_message.style.display = "none"; // Hide the message
+      submitButton.disabled = true; // Disable the submit button
+      submitButton.querySelector(".spinner-border").classList.remove("visually-hidden"); // Show the spinner
+  
+      // Make an AJAX request to save the text
+      fetch("/save-faq", {
+        method: "POST",
+        body: new FormData(document.getElementById("faq-form")),
+      })
+        .then(function (response) {
+          if (response.ok) {
+            return response.json();
+          } else {
+            throw new Error("Error saving text.");
+          }
+        })
+        .then(function (data) {
+          // Clear the CKEditor content
+          ckEditorInstance.setData('');
+          faq_questions.value = "";
+  
+          // Reset the select element to the default option
+          const selectOffice = document.querySelector('select[name="selectOffice"]');
+          selectOffice.selectedIndex = 0; // 0 corresponds to the default option
+
+          submitButton.disabled = false;
+          submitButton.querySelector(".spinner-border").classList.add("visually-hidden");
+  
+          toastr.success(data.message);
+        })
+        .catch(function (error) {
+          console.error(error);
+        });
+    }
+  });  
 </script>
+
 
 
 {% endblock %}
