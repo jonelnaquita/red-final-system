@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	  <title>RED Chatbot</title>
+
+    <!--
+    <script type="text/javascript"
+      id="botcopy-embedder-d7lcfheammjct"
+      class="botcopy-embedder-d7lcfheammjct" 
+      data-botId="651512899c21e0000875c28e"
+  >
+      var s = document.createElement('script'); 
+      s.type = 'text/javascript'; s.async = true; 
+      s.src = 'https://widget.botcopy.com/js/injection.js'; 
+      document.getElementById('botcopy-embedder-d7lcfheammjct').appendChild(s);
+    </script>-->
+
+    
+    <script src="https://www.gstatic.com/dialogflow-console/fast/df-messenger/prod/v1/df-messenger.js"></script>
+    <df-messenger
+      intent="default-welcome-message"
+      location="us-central1"
+      project-id="red-chatbot-final"
+      agent-id="5b29ff84-7161-4dd6-af40-8e202da4db7c"
+      language-code="en"
+      >
+      <df-messenger-chat-bubble
+        chat-title="RED"
+        chat-subtitle="Response and Engage Directly"
+        chat-title-icon="https://storage.cloud.google.com/red-chatbot-final.appspot.com/RED_Logo.png"
+        bot-writing-image="https://storage.cloud.google.com/red-chatbot-final.appspot.com/RED_Logo.png"
+        placeholder-text="Enter your response"
+        allow-fullscreen="small"
+
+        chat-icon="https://firebasestorage.googleapis.com/v0/b/red-chatbot-final.appspot.com/o/RED_Logo%20(4).png?alt=media&token=50bdf324-244d-4bd2-ba4c-d8da4e206533&_gl=1*1s2a94v*_ga*MTM1MzU1MDM1LjE2OTY5NjUyNzU.*_ga_CW55HF8NVT*MTY5NzA1MjA0Mi4zLjEuMTY5NzA1MjE1Ni41NC4wLjA."
+        chat-close-icon="https://storage.cloud.google.com/red-chatbot-final.appspot.com/RED_Logo.png"
+        chat-collapse-icon=""
+      >
+        </df-messenger-chat>
+      </df-messenger-chat-bubble>
+    </df-messenger>
+
+    <style>
+    df-messenger {
+        z-index: 999;
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+
+        --df-messenger-chat-window-height: 550px;
+        --df-messenger-chat-window-width: 450px;
+        --df-messenger-chat-window-offset: 20px;
+        --df-messenger-chat-window-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1), 
+        0 4px 6px rgba(0, 0, 0, 0.1);
+        --df-messenger-chat-border-radius: 10px;
+        --df-messenger-primary-color: #ce1e2d;
+
+        --df-messenger-titlebar-background: #ce1e2d;
+        --df-messenger-titlebar-padding:  10px 20px 10px;
+        --df-messenger-titlebar-title-font-family: "Google Sans", "Helvetica Neue", sans-serif;
+        --df-messenger-titlebar-title-font-weight: 500;
+        --df-messenger-titlebar-icon-height: 40px;
+        --df-messenger-titlebar-icon-width: 35px;
+        --df-messenger-message-bot-background: #ce1e2d;
+        --df-messenger-message-bot-font-color: #ffff;
+        --df-messenger-message-bot-border-top-left-radius: 15px;
+        --df-messenger-message-bot-border-top-right-radius: 15px;
+        --df-messenger-message-bot-border-bottom-right-radius: 15px;
+        --df-messenger-message-bot-border-bottom-left-radius: 0px;
+
+        --df-messenger-message-user-border-top-left-radius: 15px;
+        --df-messenger-message-user-border-top-right-radius: 15px;
+        --df-messenger-message-user-border-bottom-right-radius: 0px;
+        --df-messenger-message-user-border-bottom-left-radius: 15px;
+
+        /*User Input*/
+        --df-messenger-send-icon-color: #ce1e2d;
+        --df-messenger-send-icon-color-hover: #fa7474;
+        --df-messenger-input-box-padding: 0px 10px;
+        --df-messenger-input-gutter: "stable";
+
+    }
+
+
+    </style>
+
+    <!-- plugins:css -->
+    <link rel="shortcut icon" href="assets/images/RED_Logo.png" />
+    <link rel="stylesheet" href="static/vendors/feather/feather.css">
+    <link rel="stylesheet" href="static/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="static/vendors/ti-icons/css/themify-icons.css">
+    <link rel="stylesheet" href="static/vendors/typicons/typicons.css">
+    <link rel="stylesheet" href="static/vendors/simple-line-icons/css/simple-line-icons.css">
+    <link rel="stylesheet" href="static/vendors/css/vendor.bundle.base.css">
+
+    <link rel="stylesheet" href="static/css/vertical-layout-light/style.css">
+    <!-- endinject -->
+    <link rel="stylesheet" href="static/css/custom/preloader.css">
+    <link rel="stylesheet" href="static/assets/css/style.css">
+
+    <!--Font Family-->
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        .header{
+            height: 100%;
+        }
+    </style>
+    
+
+</head>
+<body>
+  <header>
+    <nav class="navbar navbar-expand-lg navbar-light transparent-navbar bg-light" id="navbar">
+        <div class="container">
+          <!-- Logo and Brand -->
+          <a class="navbar-brand" href="#">
+            <img src="static/assets/images/RED Logo.png" alt="Logo" width="100">
+          </a>
+          <!-- Toggle button for small screens
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button> -->
+            <div class="ml-auto">
+                <button type="button" class="btn btn-outline-success btn-fw">ADMIN</button>
+            </div>
+        </div>
+      </nav>
+    </header>  
+    <div class="header">
+        <div class="banner">
+            <div class="container">
+              <div class="row">
+                <div class="col-lg-6 text-left banner-text"> <!-- Add text-left class here -->
+                  <h1 class="font-weight-semibold">Experience Seamless Campus Assistance with Our University Chatbot!</h1>
+                  <h6 class="font-weight-normal text-muted pb-3">From admissions to academics, get instant answers to your questions 24/7, making your educational journey smoother and more accessible.</h6>
+                  <div>
+                    <a href="https://batstate-u.edu.ph/" class="btn btn-danger ml-1">University Website</a>
+                  </div>
+                </div>
+                <div class="col-lg-6 banner-img">
+                  <img src="static/assets/images/hero-faq.png" alt="" class="img-fluid">
+                </div>
+              </div>
+            </div>
+          </div>
+    </div>
+
+    <script>
+      // Function to check if the chatbot window is open
+      function isChatbotOpen() {
+        const chatbotFrame = document.querySelector('iframe[df-messenger-iframe]');
+        return chatbotFrame && chatbotFrame.style.display !== 'none';
+      }
+    
+      // Function to check screen resolution
+      function isSmallScreen() {
+        return window.innerWidth <= 500;
+      }
+    
+      // Function to toggle the navigation bar based on conditions
+      function toggleNavbarVisibility() {
+        const navbar = document.getElementById('navbar');
+        if (isChatbotOpen() && isSmallScreen()) {
+          navbar.style.display = 'none'; // Hide the navigation bar
+        } else {
+          navbar.style.display = 'block'; // Show the navigation bar
+        }
+      }
+    
+      // Initial check and event listener for resizing
+      toggleNavbarVisibility();
+      window.addEventListener('resize', toggleNavbarVisibility);
+    </>
+    
+</body>
+<footer class="footer">
+    <div class="d-sm-flex justify-content-center justify-content-sm-between">
+        <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Response and Engage Directly</span>
+        <span class="float-none float-sm-right d-block mt-1 mt-sm-0 text-center">Copyright © 2023. All rights reserved.</span>
+    </div>
+</footer>
+</html>
+
+<script src="static/vendors/js/vendor.bundle.base.js"></script>
+<script src="static/vendors/js/bootstrap.min.js.map"></script>
+<script src="static/assets/js/animation.js"></script>

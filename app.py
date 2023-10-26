@@ -60,12 +60,12 @@ embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
 
 @app.errorhandler(404)
 def page_not_found(error):
-    return render_template('404Page.html'), 404
+    return render_template('404page.html'), 404
 
 
 @app.route('/')
 def home():
-    return render_template('login.html')
+    return render_template('index.html')
 
 def check_password(password, hashed_password):
     return bcrypt.checkpw(password.encode("UTF-8"), hashed_password)
