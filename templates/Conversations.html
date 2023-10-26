@@ -12,17 +12,14 @@
                 <div class="col grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
+                            <h4 class="card-title">Messages</h4>
+                            <p class="card-description">Input description here!</p>
                             <div class="messaging">
                                 <div class="inbox_msg">
                                     <div class="inbox_people">
-                                        <div class="headind_srch">
-                                            <div class="recent_heading">
-                                                <h4>Messages</h4>
-                                            </div>
-                                        </div>
                                         <div class="inbox_chat">
                                             {% for session in sessions %}
-                                                <div class="chat_list" data-session-id="{{ session.sessionID }}">
+                                                <div class="chat_list tab-pane" data-session-id="{{ session.sessionID }}">
                                                     <div class="chat_people">
                                                         <div class="chat_ib">
                                                             <input type="hidden" value="{{ session.sessionID }}">
@@ -47,6 +44,7 @@
         </div>
     </div>
     <script>
+        //Function to load conversation when a chat list was clicked
         document.querySelectorAll('.chat_list').forEach(function(chatList) {
             chatList.addEventListener('click', function() {
                 var sessionId = chatList.getAttribute('data-session-id');
@@ -91,6 +89,63 @@
             });
         });
     </script>
+
+    <script>
+        // Function to load the most recent conversation for the first chat session when the page loads
+        function loadMostRecentConversation() {
+            // Check if there is at least one chat session
+            var chatLists = document.querySelectorAll('.chat_list');
+            if (chatLists.length > 0) {
+                var firstChatList = chatLists[0];
+                var sessionId = firstChatList.getAttribute('data-session-id');
+    
+                // Add 'active_chat' class to the first chat_list element
+                firstChatList.classList.add('active_chat');
+    
+                fetch('/conversations/' + sessionId)
+                    .then(function(response) {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(function(conversation) {
+                        var mesgs = document.querySelector('.mesgs .msg_history');
+                        mesgs.innerHTML = '';
+    
+                        conversation.forEach(function(message) {
+                            var messageHtml = `
+                                <div class="incoming_msg">
+                                    <div class="received_msg">
+                                        <div class="received_withd_msg">
+                                            <p>${message.incomingMessage}</p>
+                                            <span class="time_date">${message.timestamp}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="outgoing_msg">
+                                    <div class="incoming_msg_img float-right">
+                                        <img src="/static/assets/images/RED_Logo.png" alt="red-logo">
+                                    </div>
+                                    <div class="sent_msg">
+                                        <p>${message.botMessage}</p>
+                                        <span class="time_date">${message.timestamp}</span>
+                                    </div>
+                                </div>
+                            `;
+                            mesgs.innerHTML += messageHtml;
+                        });
+                    })
+                    .catch(function(error) {
+                        console.error(error);
+                    });
+            }
+        }
+    
+        // Call the function to load the most recent conversation when the page loads
+        window.addEventListener('load', loadMostRecentConversation);
+    </script>
+    
     <script>
         document.querySelectorAll('.chat_list').forEach(function(chatList) {
             chatList.addEventListener('click', function() {

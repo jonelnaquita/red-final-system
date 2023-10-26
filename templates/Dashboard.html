@@ -22,24 +22,24 @@
                                 <div class="col-sm-12">
                                     <div class="statistics-details d-flex align-items-center justify-content-between">
                                         <div>
-                                          <p class="statistics-title">Conversations</p>
-                                          <h3 class="rate-percentage">6</h3>
-                                          <p class="text-success d-flex"><i class="mdi mdi-menu-up"></i><span>+0.1%</span></p>
-                                        </div>
-                                        <div>
                                           <p class="statistics-title">Sessions</p>
-                                          <h3 class="rate-percentage">6</h3>
+                                          <h3 class="rate-percentage" id="session-count"></h3>
                                           <p class="text-danger d-flex"><i class="mdi mdi-menu-down"></i><span>68.8</span></p>
                                         </div>
                                         <div>
-                                          <p class="statistics-title">Bot Messages</p>
-                                          <h3 class="rate-percentage">23</h3>
+                                          <p class="statistics-title">Bot Responses</p>
+                                          <h3 class="rate-percentage" id="bot-response-count"></h3>
                                           <p class="text-success d-flex"><i class="mdi mdi-menu-down"></i><span>+0.8%</span></p>
                                         </div>
                                         <div>
                                           <p class="statistics-title">In Messages</p>
-                                          <h3 class="rate-percentage">11</h3>
+                                          <h3 class="rate-percentage" id="in-message-count">11</h3>
                                           <p class="text-danger d-flex"><i class="mdi mdi-menu-down"></i><span>68.8</span></p>
+                                        </div>
+                                        <div>
+                                          <p class="statistics-title">Average Response Time</p>
+                                          <h3 class="rate-percentage">6</h3>
+                                          <p class="text-success d-flex"><i class="mdi mdi-menu-up"></i><span>+0.1%</span></p>
                                         </div>
                                         <div>
                                           <p class="statistics-title">Site Visitors</p>
@@ -48,7 +48,8 @@
                                         </div>
                                     </div>
                                 </div>
-                              </div> 
+                              </div>
+
                               <div class="row">
                                 <div class="col-lg-8 d-flex flex-column">
                                   <div class="row flex-grow">
@@ -58,11 +59,32 @@
                                           <div class="d-sm-flex justify-content-between align-items-start">
                                             <div>
                                              <h4 class="card-title card-title-dash">Performance Line Chart</h4>
-                                             <h5 class="card-subtitle card-subtitle-dash">RED Performance Per Day</h5>
+                                             <h5 class="card-subtitle card-subtitle-dash">RED Engagement Per Day</h5>
                                             </div>
+                                            <div class="dropdown">
+                                              <button class="btn btn-light dropdown-toggle toggle-dark btn-lg mb-0 me-0" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="icon-download"></i> Export </button>
+                                              <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
+                                                <a class="dropdown-item" href="#">PDF</a>
+                                                <a class="dropdown-item" href="#">CSV</a>
+                                              </div>
+                                            </div>
+                                          </div>
+                                          <div class="d-sm-flex align-items-center mt-1 justify-content-between">
+                                            <div></div>
                                             <div id="performance-line-legend"><div class="chartjs-legend"><ul><li><span style="background-color:#1F3BB3"></span>This week</li><li><span style="background-color:#52CDFF"></span>Last week</li></ul></div></div>
                                           </div>
-                                          <div class="chartjs-wrapper mt-4"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
+                                          <div class="chartjs-wrapper mt-4">
+                                            <div class="chartjs-size-monitor">
+                                              <div class="chartjs-size-monitor-expand">
+                                                <div class="">
+                                                </div>
+                                              </div>
+                                              <div class="chartjs-size-monitor-shrink">
+                                                <div class="">
+
+                                                </div>
+                                              </div>
+                                            </div>
                                             <canvas id="performaneLine" style="display: block; height: 150px; width: 361px;" width="451" height="187" class="chartjs-render-monitor"></canvas> 
                                           </div>
                                         </div>
@@ -73,15 +95,15 @@
                                 <div class="col-lg-4 d-flex flex-column">
                                   <div class="row flex-grow">
                                     <div class="col-md-6 col-lg-12 grid-margin stretch-card">
-                                      <div class="card bg-primary card-rounded">
+                                      <div class="card bg-danger card-rounded">
                                         <div class="card-body pb-0">
-                                          <h4 class="card-title card-title-dash text-white mb-4">Status Summary</h4>
+                                          <h4 class="card-title card-title-dash text-white mb-4">Sessions Summary</h4>
                                           <div class="row">
                                             <div class="col-sm-4">
-                                              <p class="status-summary-ight-white mb-1">Total Sesions This Week</p>
-                                              <h2 class="text-info">3</h2>
+                                              <p class="status-summary-ight-white mb-1">This Week</p>
+                                              <h2 class="text-light">{{ total_sessions }}</h2>
                                             </div>
-                                            <div class="col-sm-8">
+                                            <div class="col-sm-8 ml-2">
                                               <div class="status-summary-chart-wrapper pb-4"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
                                                 <canvas id="status-summary" width="451" height="82" style="display: block; height: 66px; width: 361px;" class="chartjs-render-monitor"></canvas>
                                               </div>
@@ -93,6 +115,7 @@
                                     <div class="col-md-6 col-lg-12 grid-margin stretch-card">
                                       <div class="card card-rounded">
                                         <div class="card-body">
+                                          <h4 class="card-title card-title-dash mb-4">Site Visitors Summary</h4>
                                           <div class="row">
                                             <div class="col-sm-6">
                                               <div class="d-flex justify-content-between align-items-center mb-2 mb-sm-0">
@@ -136,29 +159,25 @@
                                         <div class="card-body">
                                           <div class="d-sm-flex justify-content-between align-items-start">
                                             <div>
-                                              <h4 class="card-title card-title-dash">Market Overview</h4>
-                                             <p class="card-subtitle card-subtitle-dash">Lorem ipsum dolor sit amet consectetur adipisicing elit</p>
+                                              <h4 class="card-title card-title-dash">Performance Bar Chart</h4>
+                                             <p class="card-subtitle card-subtitle-dash">RED Engagement Per Month</p>
                                             </div>
                                             <div>
                                               <div class="dropdown">
-                                                <button class="btn btn-light dropdown-toggle toggle-dark btn-lg mb-0 me-0" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> This month </button>
+                                                <button class="btn btn-light dropdown-toggle toggle-dark btn-lg mb-0 me-0" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="icon-download"></i> Export </button>
                                                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
-                                                  <h6 class="dropdown-header">Settings</h6>
-                                                  <a class="dropdown-item" href="#">Action</a>
-                                                  <a class="dropdown-item" href="#">Another action</a>
-                                                  <a class="dropdown-item" href="#">Something else here</a>
-                                                  <div class="dropdown-divider"></div>
-                                                  <a class="dropdown-item" href="#">Separated link</a>
+                                                  <a class="dropdown-item" href="#">PDF</a>
+                                                  <a class="dropdown-item" href="#">CSV</a>
                                                 </div>
                                               </div>
                                             </div>
                                           </div>
                                           <div class="d-sm-flex align-items-center mt-1 justify-content-between">
-                                            <div class="d-sm-flex align-items-center mt-4 justify-content-between"><h2 class="me-2 fw-bold">$36,2531.00</h2><h4 class="me-2">USD</h4><h4 class="text-success">(+1.37%)</h4></div>
+                                            <div></div>
                                             <div class="me-3"><div id="marketing-overview-legend"><div class="chartjs-legend"><ul><li class="text-muted text-small"><span style="background-color:#52CDFF"></span>Last week</li><li class="text-muted text-small"><span style="background-color:#1F3BB3"></span>This week</li></ul></div></div></div>
                                           </div>
                                           <div class="chartjs-bar-wrapper mt-3"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
-                                            <canvas id="marketingOverview" width="451" height="187" style="display: block; height: 150px; width: 361px;" class="chartjs-render-monitor"></canvas>
+                                            <canvas id="performanceBarChart" width="451" height="187" style="display: block; height: 150px; width: 361px;" class="chartjs-render-monitor"></canvas>
                                           </div>
                                         </div>
                                       </div>
@@ -178,408 +197,8 @@
                                       </div>
                                     </div>
                                   </div>
-                                  <div class="row flex-grow">
-                                    <div class="col-12 grid-margin stretch-card">
-                                      <div class="card card-rounded">
-                                        <div class="card-body">
-                                          <div class="d-sm-flex justify-content-between align-items-start">
-                                            <div>
-                                              <h4 class="card-title card-title-dash">Pending Requests</h4>
-                                             <p class="card-subtitle card-subtitle-dash">You have 50+ new requests</p>
-                                            </div>
-                                            <div>
-                                              <button class="btn btn-primary btn-lg text-white mb-0 me-0" type="button"><i class="mdi mdi-account-plus"></i>Add new member</button>
-                                            </div>
-                                          </div>
-                                          <div class="table-responsive  mt-1">
-                                            <table class="table select-table">
-                                              <thead>
-                                                <tr>
-                                                  <th>
-                                                    <div class="form-check form-check-flat mt-0">
-                                                      <label class="form-check-label">
-                                                        <input type="checkbox" class="form-check-input" aria-checked="false"><i class="input-helper"></i><i class="input-helper"></i></label>
-                                                    </div>
-                                                  </th>
-                                                  <th>Customer</th>
-                                                  <th>Company</th>
-                                                  <th>Progress</th>
-                                                  <th>Status</th>
-                                                </tr>
-                                              </thead>
-                                              <tbody>
-                                                <tr>
-                                                  <td>
-                                                    <div class="form-check form-check-flat mt-0">
-                                                      <label class="form-check-label">
-                                                      <input type="checkbox" class="form-check-input" aria-checked="false"><i class="input-helper"></i><i class="input-helper"></i></label>
-                                                    </div>
-                                                  </td>
-                                                  <td>
-                                                    <div class="d-flex ">
-                                                      <img src="../../images/faces/face1.jpg" alt="">
-                                                      <div>
-                                                        <h6>Brandon Washington</h6>
-                                                        <p>Head admin</p>
-                                                      </div>
-                                                    </div>
-                                                  </td>
-                                                  <td>
-                                                    <h6>Company name 1</h6>
-                                                    <p>company type</p>
-                                                  </td>
-                                                  <td>
-                                                    <div>
-                                                      <div class="d-flex justify-content-between align-items-center mb-1 max-width-progress-wrap">
-                                                        <p class="text-success">79%</p>
-                                                        <p>85/162</p>
-                                                      </div>
-                                                      <div class="progress progress-md">
-                                                        <div class="progress-bar bg-success" role="progressbar" style="width: 85%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
-                                                      </div>
-                                                    </div>
-                                                  </td>
-                                                  <td><div class="badge badge-opacity-warning">In progress</div></td>
-                                                </tr>
-                                                <tr>
-                                                  <td>
-                                                    <div class="form-check form-check-flat mt-0">
-                                                      <label class="form-check-label">
-                                                      <input type="checkbox" class="form-check-input" aria-checked="false"><i class="input-helper"></i><i class="input-helper"></i></label>
-                                                    </div>
-                                                  </td>
-                                                  <td>
-                                                    <div class="d-flex">
-                                                      <img src="../../images/faces/face2.jpg" alt="">
-                                                      <div>
-                                                        <h6>Laura Brooks</h6>
-                                                        <p>Head admin</p>
-                                                      </div>
-                                                    </div>
-                                                  </td>
-                                                  <td>
-                                                    <h6>Company name 1</h6>
-                                                    <p>company type</p>
-                                                  </td>
-                                                  <td>
-                                                    <div>
-                                                      <div class="d-flex justify-content-between align-items-center mb-1 max-width-progress-wrap">
-                                                        <p class="text-success">65%</p>
-                                                        <p>85/162</p>
-                                                      </div>
-                                                      <div class="progress progress-md">
-                                                        <div class="progress-bar bg-success" role="progressbar" style="width: 65%" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
-                                                      </div>
-                                                    </div>
-                                                  </td>
-                                                  <td><div class="badge badge-opacity-warning">In progress</div></td>
-                                                </tr>
-                                                <tr>
-                                                  <td>
-                                                    <div class="form-check form-check-flat mt-0">
-                                                      <label class="form-check-label">
-                                                      <input type="checkbox" class="form-check-input" aria-checked="false"><i class="input-helper"></i><i class="input-helper"></i></label>
-                                                    </div>
-                                                  </td>
-                                                  <td>
-                                                    <div class="d-flex">
-                                                      <img src="../../images/faces/face3.jpg" alt="">
-                                                      <div>
-                                                        <h6>Wayne Murphy</h6>
-                                                        <p>Head admin</p>
-                                                      </div>
-                                                    </div>
-                                                  </td>
-                                                  <td>
-                                                    <h6>Company name 1</h6>
-                                                    <p>company type</p>
-                                                  </td>
-                                                  <td>
-                                                    <div>
-                                                      <div class="d-flex justify-content-between align-items-center mb-1 max-width-progress-wrap">
-                                                        <p class="text-success">65%</p>
-                                                        <p>85/162</p>
-                                                      </div>
-                                                      <div class="progress progress-md">
-                                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 38%" aria-valuenow="38" aria-valuemin="0" aria-valuemax="100"></div>
-                                                      </div>
-                                                    </div>
-                                                  </td>
-                                                  <td><div class="badge badge-opacity-warning">In progress</div></td>
-                                                </tr>
-                                                <tr>
-                                                  <td>
-                                                    <div class="form-check form-check-flat mt-0">
-                                                      <label class="form-check-label">
-                                                      <input type="checkbox" class="form-check-input" aria-checked="false"><i class="input-helper"></i><i class="input-helper"></i></label>
-                                                    </div>
-                                                  </td>
-                                                  <td>
-                                                    <div class="d-flex">
-                                                      <img src="../../images/faces/face4.jpg" alt="">
-                                                      <div>
-                                                        <h6>Matthew Bailey</h6>
-                                                        <p>Head admin</p>
-                                                      </div>
-                                                    </div>
-                                                  </td>
-                                                  <td>
-                                                    <h6>Company name 1</h6>
-                                                    <p>company type</p>
-                                                  </td>
-                                                  <td>
-                                                    <div>
-                                                      <div class="d-flex justify-content-between align-items-center mb-1 max-width-progress-wrap">
-                                                        <p class="text-success">65%</p>
-                                                        <p>85/162</p>
-                                                      </div>
-                                                      <div class="progress progress-md">
-                                                        <div class="progress-bar bg-danger" role="progressbar" style="width: 15%" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100"></div>
-                                                      </div>
-                                                    </div>
-                                                  </td>
-                                                  <td><div class="badge badge-opacity-danger">Pending</div></td>
-                                                </tr>
-                                                <tr>
-                                                  <td>
-                                                    <div class="form-check form-check-flat mt-0">
-                                                      <label class="form-check-label">
-                                                      <input type="checkbox" class="form-check-input" aria-checked="false"><i class="input-helper"></i><i class="input-helper"></i></label>
-                                                    </div>
-                                                  </td>
-                                                  <td>
-                                                    <div class="d-flex">
-                                                      <img src="../../images/faces/face5.jpg" alt="">
-                                                      <div>
-                                                        <h6>Katherine Butler</h6>
-                                                        <p>Head admin</p>
-                                                      </div>
-                                                    </div>
-                                                  </td>
-                                                  <td>
-                                                    <h6>Company name 1</h6>
-                                                    <p>company type</p>
-                                                  </td>
-                                                  <td>
-                                                    <div>
-                                                      <div class="d-flex justify-content-between align-items-center mb-1 max-width-progress-wrap">
-                                                        <p class="text-success">65%</p>
-                                                        <p>85/162</p>
-                                                      </div>
-                                                      <div class="progress progress-md">
-                                                        <div class="progress-bar bg-success" role="progressbar" style="width: 65%" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
-                                                      </div>
-                                                    </div>
-                                                  </td>
-                                                  <td><div class="badge badge-opacity-success">Completed</div></td>
-                                                </tr>
-                                              </tbody>
-                                            </table>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div class="row flex-grow">
-                                    <div class="col-md-6 col-lg-6 grid-margin stretch-card">
-                                      <div class="card card-rounded">
-                                        <div class="card-body card-rounded">
-                                          <h4 class="card-title  card-title-dash">Recent Events</h4>
-                                          <div class="list align-items-center border-bottom py-2">
-                                            <div class="wrapper w-100">
-                                              <p class="mb-2 font-weight-medium">
-                                                Change in Directors
-                                              </p>
-                                              <div class="d-flex justify-content-between align-items-center">
-                                                <div class="d-flex align-items-center">
-                                                  <i class="mdi mdi-calendar text-muted me-1"></i>
-                                                  <p class="mb-0 text-small text-muted">Mar 14, 2019</p>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
-                                          <div class="list align-items-center border-bottom py-2">
-                                            <div class="wrapper w-100">
-                                              <p class="mb-2 font-weight-medium">
-                                                Other Events
-                                              </p>
-                                              <div class="d-flex justify-content-between align-items-center">
-                                                <div class="d-flex align-items-center">
-                                                  <i class="mdi mdi-calendar text-muted me-1"></i>
-                                                  <p class="mb-0 text-small text-muted">Mar 14, 2019</p>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
-                                          <div class="list align-items-center border-bottom py-2">
-                                            <div class="wrapper w-100">
-                                              <p class="mb-2 font-weight-medium">
-                                                Quarterly Report
-                                              </p>
-                                              <div class="d-flex justify-content-between align-items-center">
-                                                <div class="d-flex align-items-center">
-                                                  <i class="mdi mdi-calendar text-muted me-1"></i>
-                                                  <p class="mb-0 text-small text-muted">Mar 14, 2019</p>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
-                                          <div class="list align-items-center border-bottom py-2">
-                                            <div class="wrapper w-100">
-                                              <p class="mb-2 font-weight-medium">
-                                                Change in Directors
-                                              </p>
-                                              <div class="d-flex justify-content-between align-items-center">
-                                                <div class="d-flex align-items-center">
-                                                  <i class="mdi mdi-calendar text-muted me-1"></i>
-                                                  <p class="mb-0 text-small text-muted">Mar 14, 2019</p>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
-                                          
-                                          <div class="list align-items-center pt-3">
-                                            <div class="wrapper w-100">
-                                              <p class="mb-0">
-                                                <a href="#" class="fw-bold text-primary">Show all <i class="mdi mdi-arrow-right ms-2"></i></a>
-                                              </p>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div class="col-md-6 col-lg-6 grid-margin stretch-card">
-                                      <div class="card card-rounded">
-                                        <div class="card-body">
-                                          <div class="d-flex align-items-center justify-content-between mb-3">
-                                            <h4 class="card-title card-title-dash">Activities</h4>
-                                            <p class="mb-0">20 finished, 5 remaining</p>
-                                          </div>
-                                          <ul class="bullet-line-list">
-                                            <li>
-                                              <div class="d-flex justify-content-between">
-                                                <div><span class="text-light-green">Ben Tossell</span> assign you a task</div>
-                                                <p>Just now</p>
-                                              </div>
-                                            </li>
-                                            <li>
-                                              <div class="d-flex justify-content-between">
-                                                <div><span class="text-light-green">Oliver Noah</span> assign you a task</div>
-                                                <p>1h</p>
-                                              </div>
-                                            </li>
-                                            <li>
-                                              <div class="d-flex justify-content-between">
-                                                <div><span class="text-light-green">Jack William</span> assign you a task</div>
-                                                <p>1h</p>
-                                              </div>
-                                            </li>
-                                            <li>
-                                              <div class="d-flex justify-content-between">
-                                                <div><span class="text-light-green">Leo Lucas</span> assign you a task</div>
-                                                <p>1h</p>
-                                              </div>
-                                            </li>
-                                            <li>
-                                              <div class="d-flex justify-content-between">
-                                                <div><span class="text-light-green">Thomas Henry</span> assign you a task</div>
-                                                <p>1h</p>
-                                              </div>
-                                            </li>
-                                            <li>
-                                              <div class="d-flex justify-content-between">
-                                                <div><span class="text-light-green">Ben Tossell</span> assign you a task</div>
-                                                <p>1h</p>
-                                              </div>
-                                            </li>
-                                            <li>
-                                              <div class="d-flex justify-content-between">
-                                                <div><span class="text-light-green">Ben Tossell</span> assign you a task</div>
-                                                <p>1h</p>
-                                              </div>
-                                            </li>
-                                          </ul>
-                                          <div class="list align-items-center pt-3">
-                                            <div class="wrapper w-100">
-                                              <p class="mb-0">
-                                                <a href="#" class="fw-bold text-primary">Show all <i class="mdi mdi-arrow-right ms-2"></i></a>
-                                              </p>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
                                 </div>
                                 <div class="col-lg-4 d-flex flex-column">
-                                  <div class="row flex-grow">
-                                    <div class="col-12 grid-margin stretch-card">
-                                      <div class="card card-rounded">
-                                        <div class="card-body">
-                                          <div class="row">
-                                            <div class="col-lg-12">
-                                              <div class="d-flex justify-content-between align-items-center">
-                                                <h4 class="card-title card-title-dash">Todo list</h4>
-                                                <div class="add-items d-flex mb-0">
-                                                  <!-- <input type="text" class="form-control todo-list-input" placeholder="What do you need to do today?"> -->
-                                                  <button class="add btn btn-icons btn-rounded btn-primary todo-list-add-btn text-white me-0 pl-12p"><i class="mdi mdi-plus"></i></button>
-                                                </div>
-                                              </div>
-                                              <div class="list-wrapper">
-                                                <ul class="todo-list todo-list-rounded">
-                                                  <li class="d-block">
-                                                    <div class="form-check w-100">
-                                                      <label class="form-check-label">
-                                                        <input class="checkbox" type="checkbox"> Lorem Ipsum is simply dummy text of the printing <i class="input-helper rounded"></i>
-                                                      <i class="input-helper"></i></label>
-                                                      <div class="d-flex mt-2">
-                                                        <div class="ps-4 text-small me-3">24 June 2020</div>
-                                                        <div class="badge badge-opacity-warning me-3">Due tomorrow</div>
-                                                        <i class="mdi mdi-flag ms-2 flag-color"></i>
-                                                      </div>
-                                                    </div>
-                                                  </li>
-                                                  <li class="d-block">
-                                                    <div class="form-check w-100">
-                                                      <label class="form-check-label">
-                                                        <input class="checkbox" type="checkbox"> Lorem Ipsum is simply dummy text of the printing <i class="input-helper rounded"></i>
-                                                      <i class="input-helper"></i></label>
-                                                      <div class="d-flex mt-2">
-                                                        <div class="ps-4 text-small me-3">23 June 2020</div>
-                                                        <div class="badge badge-opacity-success me-3">Done</div>
-                                                      </div>
-                                                    </div>
-                                                  </li>
-                                                  <li>
-                                                    <div class="form-check w-100">
-                                                      <label class="form-check-label">
-                                                        <input class="checkbox" type="checkbox"> Lorem Ipsum is simply dummy text of the printing <i class="input-helper rounded"></i>
-                                                      <i class="input-helper"></i></label>
-                                                      <div class="d-flex mt-2">
-                                                        <div class="ps-4 text-small me-3">24 June 2020</div>
-                                                        <div class="badge badge-opacity-success me-3">Done</div>
-                                                      </div>
-                                                    </div>
-                                                  </li>
-                                                  <li class="border-bottom-0">
-                                                    <div class="form-check w-100">
-                                                      <label class="form-check-label">
-                                                        <input class="checkbox" type="checkbox"> Lorem Ipsum is simply dummy text of the printing <i class="input-helper rounded"></i>
-                                                      <i class="input-helper"></i></label>
-                                                      <div class="d-flex mt-2">
-                                                        <div class="ps-4 text-small me-3">24 June 2020</div>
-                                                        <div class="badge badge-opacity-danger me-3">Expired</div>
-                                                      </div>
-                                                    </div>
-                                                  </li>
-                                                </ul>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
                                   <div class="row flex-grow">
                                     <div class="col-12 grid-margin stretch-card">
                                       <div class="card card-rounded">
@@ -643,6 +262,290 @@
 </body>
 
 {% block scripts %}
+<script>
+  // Get the session count value from Flask and embed it into the JavaScript
+  const sessionCount = {{ session_count }};
+  const inMessageCount = {{ inMessage_count }};
+  const botResponseCount = {{ botMessage_count }};
+  
+  // Function to update the session count
+  function updateSessionCount() {
+      $('#session-count').text(sessionCount);
+      $('#in-message-count').text(inMessageCount);
+      $('#bot-response-count').text(botResponseCount);
+
+      if ($("#performaneLine").length) {
+        var graphGradient = document.getElementById("performaneLine").getContext('2d');
+        var graphGradient2 = document.getElementById("performaneLine").getContext('2d');
+        var saleGradientBg = graphGradient.createLinearGradient(5, 0, 5, 100);
+        saleGradientBg.addColorStop(0, 'rgba(26, 115, 232, 0.18)');
+        saleGradientBg.addColorStop(1, 'rgba(26, 115, 232, 0.02)');
+        var saleGradientBg2 = graphGradient2.createLinearGradient(100, 0, 50, 150);
+        saleGradientBg2.addColorStop(0, 'rgba(0, 208, 255, 0.19)');
+        saleGradientBg2.addColorStop(1, 'rgba(0, 208, 255, 0.03)');
+  
+        var currentWeekSessionData = {{ current_week_session_data }};
+        var previousWeekSessionData = {{ last_week_session_data }};
+
+        var salesTopData = {
+            labels: ["SUN","MON", "TUE", "WED", "THU", "FRI", "SAT",],
+            datasets: [{
+                label: 'This week',
+                data: currentWeekSessionData,
+                backgroundColor: saleGradientBg,
+                borderColor: [
+                    '#1F3BB3',
+                ],
+                borderWidth: 1.5,
+                fill: true, // 3: no fill
+                pointBorderWidth: 1,
+                pointRadius: [4, 4, 4, 4, 4,4, 4, 4, 4, 4,4, 4, 4],
+                pointHoverRadius: [2, 2, 2, 2, 2,2, 2, 2, 2, 2,2, 2, 2],
+                pointBackgroundColor: ['#1F3BB3)', '#1F3BB3', '#1F3BB3', '#1F3BB3','#1F3BB3)', '#1F3BB3', '#1F3BB3',],
+                pointBorderColor: ['#fff','#fff','#fff','#fff','#fff','#fff','#fff',],
+            },{
+              label: 'Last week',
+              data: previousWeekSessionData,
+              backgroundColor: saleGradientBg2,
+              borderColor: [
+                  '#52CDFF',
+              ],
+              borderWidth: 1.5,
+              fill: true, // 3: no fill
+              pointBorderWidth: 1,
+              pointRadius: [4, 4, 4, 4, 4,4, 4, 4, 4, 4,4, 4, 4],
+              pointHoverRadius: [2, 2, 2, 2, 2,2, 2, 2, 2, 2,2, 2, 2],
+              pointBackgroundColor: ['#52CDFF)', '#52CDFF', '#52CDFF', '#52CDFF','#52CDFF)', '#52CDFF', '#52CDFF',],
+                pointBorderColor: ['#fff','#fff','#fff','#fff','#fff','#fff','#fff',],
+          }]
+        };
+    
+        var salesTopOptions = {
+          responsive: true,
+          maintainAspectRatio: false,
+            scales: {
+                yAxes: [{
+                    gridLines: {
+                        display: true,
+                        drawBorder: false,
+                        color:"#F0F0F0",
+                        zeroLineColor: '#F0F0F0',
+                    },
+                    ticks: {
+                      beginAtZero: false,
+                      autoSkip: true,
+                      maxTicksLimit: 4,
+                      fontSize: 10,
+                      color:"#6B778C"
+                    }
+                }],
+                xAxes: [{
+                  gridLines: {
+                      display: false,
+                      drawBorder: false,
+                  },
+                  ticks: {
+                    beginAtZero: false,
+                    autoSkip: true,
+                    maxTicksLimit: 7,
+                    fontSize: 10,
+                    color:"#6B778C"
+                  }
+              }],
+            },
+            legend:false,
+            legendCallback: function (chart) {
+              var text = [];
+              text.push('<div class="chartjs-legend"><ul>');
+              for (var i = 0; i < chart.data.datasets.length; i++) {
+                console.log(chart.data.datasets[i]); // see what's inside the obj.
+                text.push('<li>');
+                text.push('<span style="background-color:' + chart.data.datasets[i].borderColor + '">' + '</span>');
+                text.push(chart.data.datasets[i].label);
+                text.push('</li>');
+              }
+              text.push('</ul></div>');
+              return text.join("");
+            },
+            
+            elements: {
+                line: {
+                    tension: 0.4,
+                }
+            },
+            tooltips: {
+                backgroundColor: 'rgba(31, 59, 179, 1)',
+            }
+        }
+        var salesTop = new Chart(graphGradient, {
+            type: 'line',
+            data: salesTopData,
+            options: salesTopOptions
+        });
+        document.getElementById('performance-line-legend').innerHTML = salesTop.generateLegend();
+      }
+
+      if ($("#status-summary").length) {
+        var statusSummaryChartCanvas = document.getElementById("status-summary").getContext('2d');;
+        var statusData = {
+            labels: ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT",],
+            datasets: [{
+                label: '# of Sessions',
+                data: currentWeekSessionData,
+                backgroundColor: "#FFFF",
+                borderColor: [
+                    '#FFFF',
+                ],
+                borderWidth: 2,
+                fill: false, // 3: no fill
+                pointBorderWidth: 0,
+                pointRadius: [0, 0, 0, 0, 0, 0],
+                pointHoverRadius: [0, 0, 0, 0, 0, 0],
+            }]
+        };
+    
+        var statusOptions = {
+          responsive: true,
+          maintainAspectRatio: false,
+            scales: {
+                yAxes: [{
+                  display:false,
+                    gridLines: {
+                        display: false,
+                        drawBorder: false,
+                        color:"#F0F0F0"
+                    },
+                    ticks: {
+                      beginAtZero: false,
+                      autoSkip: true,
+                      maxTicksLimit: 4,
+                      fontSize: 10,
+                      color:"#FFFF"
+                    }
+                }],
+                xAxes: [{
+                  display:false,
+                  gridLines: {
+                      display: false,
+                      drawBorder: false,
+                  },
+                  ticks: {
+                    beginAtZero: false,
+                    autoSkip: true,
+                    maxTicksLimit: 7,
+                    fontSize: 10,
+                    color:"#FFF"
+                  }
+              }],
+            },
+            legend:false,
+            
+            elements: {
+                line: {
+                    tension: 0.4,
+                }
+            },
+            tooltips: {
+                backgroundColor: 'rgba(31, 59, 179, 1)',
+            }
+        }
+        var statusSummaryChart = new Chart(statusSummaryChartCanvas, {
+            type: 'line',
+            data: statusData,
+            options: statusOptions
+        });
+      }
+
+      //JavaScript for Performance Bar Chart
+      if ($("#performanceBarChart").length) {
+        var sessionCounts = {{ session_month }};
+        var marketingOverviewChart = document.getElementById("performanceBarChart").getContext('2d');
+        var marketingOverviewData = {
+            labels: ["JAN","FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"],
+            datasets: [{
+              label: 'Month',
+              data: sessionCounts,
+              backgroundColor: "#CE1E2D",
+              borderColor: [
+                  '#CE1E2D',
+              ],
+              borderWidth: 0,
+              fill: true, // 3: no fill
+          }]
+        };
+    
+        var marketingOverviewOptions = {
+          responsive: true,
+          maintainAspectRatio: false,
+            scales: {
+                yAxes: [{
+                    gridLines: {
+                        display: true,
+                        drawBorder: false,
+                        color:"#F0F0F0",
+                        zeroLineColor: '#F0F0F0',
+                    },
+                    ticks: {
+                      beginAtZero: true,
+                      autoSkip: true,
+                      maxTicksLimit: 5,
+                      fontSize: 10,
+                      color:"#6B778C"
+                    }
+                }],
+                xAxes: [{
+                  stacked: true,
+                  barPercentage: 0.35,
+                  gridLines: {
+                      display: false,
+                      drawBorder: false,
+                  },
+                  ticks: {
+                    beginAtZero: false,
+                    autoSkip: true,
+                    maxTicksLimit: 12,
+                    fontSize: 10,
+                    color:"#6B778C"
+                  }
+              }],
+            },
+            legend:false,
+            legendCallback: function (chart) {
+              var text = [];
+              text.push('<div class="chartjs-legend"><ul>');
+              for (var i = 0; i < chart.data.datasets.length; i++) {
+                console.log(chart.data.datasets[i]); // see what's inside the obj.
+                text.push('<li class="text-muted text-small">');
+                text.push('<span style="background-color:' + chart.data.datasets[i].borderColor + '">' + '</span>');
+                text.push(chart.data.datasets[i].label);
+                text.push('</li>');
+              }
+              text.push('</ul></div>');
+              return text.join("");
+            },
+            
+            elements: {
+                line: {
+                    tension: 0.4,
+                }
+            },
+            tooltips: {
+                backgroundColor: 'rgba(31, 59, 179, 1)',
+            }
+        }
+        var marketingOverview = new Chart(marketingOverviewChart, {
+            type: 'bar',
+            data: marketingOverviewData,
+            options: marketingOverviewOptions
+        });
+        document.getElementById('marketing-overview-legend').innerHTML = marketingOverview.generateLegend();
+      }
+  }
+
+  // Call the function to initially load session count and set an interval to periodically update it
+  updateSessionCount();
+  setInterval(updateSessionCount, 60000); // Update every minute, adjust as needed
+</script>
 
 {% endblock %}
 

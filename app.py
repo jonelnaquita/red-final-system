@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_mysqldb import MySQL
+from datetime import datetime, timedelta
 import MySQLdb.cursors
+import json
 import re
 import bcrypt
 
@@ -15,6 +17,16 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.chains import RetrievalQA
 from langchain.chat_models import ChatOpenAI
 
+from langchain.chains import ConversationChain
+from langchain.chains.conversation.memory import ConversationBufferWindowMemory
+from langchain.prompts import (
+    SystemMessagePromptTemplate,
+    HumanMessagePromptTemplate,
+    ChatPromptTemplate,
+    MessagesPlaceholder
+)
+from langchain import PromptTemplate
+
 from bs4 import BeautifulSoup
 
 app = Flask(__name__,
@@ -26,7 +38,7 @@ app.secret_key = 'xyzsdfg'
 
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''
+app.config['MYSQL_PASSWORD'] = ''   
 app.config['MYSQL_DB'] = 'redcms'
 
 mysql = MySQL(app)
@@ -94,7 +106,116 @@ def dashboard():
     if 'login' not in session or not session['login']:
         # If 'login' session variable is not set or is False, redirect to login page
         return redirect(url_for('login'))
-    return render_template('dashboard.html')
+    
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT COUNT(DISTINCT sessionID) AS session_count, COUNT(incomingMessage) AS inMessages FROM tblconversations")
+        data = cursor.fetchone()
+        
+        cursor2 = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor2.execute("SELECT COUNT(botMessage) AS botMessages FROM tblconversations WHERE botMessage != ''")
+        data2 = cursor2.fetchone()
+        
+        # Get the current date
+        today = datetime.now()
+        
+        # Calculate the start and end dates for the current week (Sunday to Saturday)
+        days_until_sunday = (today.weekday() - 6) % 7
+        start_of_week = today - timedelta(days=days_until_sunday)
+        end_of_week = start_of_week + timedelta(days=6)
+        
+        # Calculate the start and end dates for the previous week
+        start_of_last_week = start_of_week - timedelta(days=7)
+        end_of_last_week = end_of_week - timedelta(days=7)
+        
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        
+        # Query data for the current week
+        query_current_week = (
+            "SELECT DAYNAME(timestamp) AS day, COUNT(DISTINCT sessionID) AS session_count "
+            "FROM tblconversations "
+            "WHERE DATE(timestamp) BETWEEN %s AND %s "
+            "GROUP BY day"
+        )
+        cursor.execute(query_current_week, (start_of_week, end_of_week))
+        current_week_data = cursor.fetchall()
+        
+        # Query data for the previous week
+        query_last_week = (
+            "SELECT DAYNAME(timestamp) AS day, COUNT(DISTINCT sessionID) AS session_count "
+            "FROM tblconversations "
+            "WHERE DATE(timestamp) BETWEEN %s AND %s "
+            "GROUP BY day"
+        )
+        cursor.execute(query_last_week, (start_of_last_week, end_of_last_week))
+        last_week_data = cursor.fetchall()
+
+        # Prepare data for JavaScript (current and last week's session data)
+        days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"]
+        current_week_session_data = [0, 0, 0, 0, 0, 0, 0]  # Initialize data for each day of the current week
+        last_week_session_data = [0, 0, 0, 0, 0, 0, 0]  # Initialize data for each day of the previous week
+        
+        for row in current_week_data:
+            day_name = row['day'].upper()
+            if day_name in days:
+                day_index = days.index(day_name)
+                current_week_session_data[day_index] = row['session_count']
+        
+        for row in last_week_data:
+            day_name = row['day'].upper()
+            if day_name in days:
+                day_index = days.index(day_name)
+                last_week_session_data[day_index] = row['session_count']
+        
+        session_count = data['session_count']
+        inMessage_count = data['inMessages']
+        botMessage_count = data2['botMessages']
+        
+        # Query data for the current week
+        query = (
+            "SELECT DATE(timestamp) AS day, COUNT(DISTINCT sessionID) AS session_count "
+            "FROM tblconversations "
+            "WHERE DATE(timestamp) BETWEEN %s AND %s "
+            "GROUP BY day"
+        )
+        cursor.execute(query, (start_of_week, end_of_week))
+        current_week_data = cursor.fetchall()
+        # Calculate the total sessions for the current week
+        total_sessions = sum(row['session_count'] for row in current_week_data)
+        
+        # Query data for total sessions per month
+        query = (
+            "SELECT "
+            "MONTH(timestamp) AS month, "
+            "COUNT(DISTINCT sessionID) AS session_count "
+            "FROM tblconversations "
+            "GROUP BY month"
+        )
+        cursor.execute(query)
+        monthly_session_data = cursor.fetchall()
+
+        # Prepare data for JavaScript
+        months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+        session_month = [0] * 12  # Initialize data for each month
+
+        for row in monthly_session_data:
+            month_index = row['month'] - 1  # MySQL months are 1-based
+            session_month[month_index] = row['session_count']
+        
+        cursor.close()
+        
+        return render_template(
+            'dashboard.html',
+            session_count = session_count,
+            inMessage_count = inMessage_count,
+            botMessage_count = botMessage_count,
+            current_week_session_data = current_week_session_data,
+            last_week_session_data = last_week_session_data,
+            total_sessions=total_sessions,
+            session_month=session_month
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 @app.route('/manage')
 def managedatasource():
@@ -181,7 +302,7 @@ def conversation():
     # Fetch sessions with their most recent messages from the database
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cursor.execute("""
-        SELECT c1.sessionID, c1.timestamp, c1.incomingMessage, c1.botMessage
+       SELECT c1.sessionID, c1.timestamp, c1.incomingMessage, c1.botMessage
         FROM tblconversations c1
         JOIN (
             SELECT sessionID, MAX(timestamp) AS max_timestamp
@@ -189,6 +310,7 @@ def conversation():
             GROUP BY sessionID
         ) c2
         ON c1.sessionID = c2.sessionID AND c1.timestamp = c2.max_timestamp
+        ORDER BY c1.timestamp DESC;
     """)
     sessions = cursor.fetchall()
     cursor.close()
@@ -583,6 +705,91 @@ def handle_dialogflow():
         })
 
 
+conversation_history = []
+
+def embedding_db():
+    # We use the OpenAI embedding model
+    index_name = "red-chatbot-final"
+    embeddings = OpenAIEmbeddings()
+    pinecone.init(
+        api_key=PINECONE_API_KEY,
+        environment=PINECONE_ENV
+    )
+
+    doc_db = Pinecone.from_existing_index(index_name, embeddings)
+    return doc_db
+
+def retrieval_answer(query, doc_db, llm, conversation_history):
+    # Append the query to the conversation history
+    conversation_history.append({"role": "user", "content": query})
+
+    qa = RetrievalQA.from_chain_type(
+        llm=llm,
+        chain_type='stuff',
+        retriever=doc_db.as_retriever(),
+    )
+    result = qa.run(query)
+    
+    # Append the response to the conversation history
+    conversation_history.append({"role": "assistant", "content": result})
+    return result
+
+@app.route('/dialogflow', methods=['POST'])
+def dialogflow_webhook():
+    data = request.get_json()
+    print(json.dumps(data))
+    
+    session_info = data['sessionInfo']['session']  # Access the sessionInfo field
+    sessionID = session_info.split('/')[-1]
+    query = data['text']
+    response = retrieval_answer(query, doc_db, llm, conversation_history)
+    timestamp = datetime.now()
+    
+   # Check if the MySQL connection is established
+    if mysql.connection is None:
+        raise Exception("MySQL connection is not established.")
+    
+    # Create a cursor and execute the SQL query
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("INSERT INTO tblconversations (sessionID, incomingMessage, botMessage, timestamp) VALUES (%s, %s, %s, %s)", (sessionID, query, response, timestamp))
+    mysql.connection.commit()
+    cursor.close()
+    
+    
+    try:
+        return jsonify(
+            {
+                'fulfillment_response': {
+                    'messages': [
+                        {
+                            'text': {
+                                'text': [response]
+                            }
+                        }
+                    ]
+                }
+            }
+        )
+        
+    except Exception as e:
+        error_message = f"Error: {str(e)}"
+        print(error_message)  # Print the error message to the console
+        return jsonify(
+            {
+                'fulfillment_response': {
+                    'messages': [
+                        {
+                            'text': {
+                                'text': [error_message]  # Include the error message in the response
+                            }
+                        }
+                    ]
+                }
+            }
+        )
+
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    llm = ChatOpenAI()
+    doc_db = embedding_db()
+    app.run(debug=True, port=5000)
