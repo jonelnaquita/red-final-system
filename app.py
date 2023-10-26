@@ -248,7 +248,7 @@ def managedatasource():
     
     cursor.close()
     
-    return render_template('DataSource.html', data = dataText, dataFAQ = dataFAQ, total_sources=total_sources, processed=processed, error=error)
+    return render_template('datasource.html', data = dataText, dataFAQ = dataFAQ, total_sources=total_sources, processed=processed, error=error)
 
 #Delete Text Data
 @app.route('/delete_selected', methods=['POST'])
@@ -291,7 +291,7 @@ def adddatasource():
     if 'login' not in session or not session['login']:
         # If 'login' session variable is not set or is False, redirect to login page
         return redirect(url_for('login'))
-    return render_template('AddDataSource.html')
+    return render_template('adddatasource.html')
 
 
 @app.route('/conversations')
@@ -316,7 +316,7 @@ def conversation():
     sessions = cursor.fetchall()
     cursor.close()
 
-    return render_template('Conversations.html', sessions=sessions)
+    return render_template('conversations.html', sessions=sessions)
 
 
 @app.route('/settings', methods=['GET', 'POST'])
@@ -349,7 +349,7 @@ def settings():
     user = cursor.fetchone()
     current_email = user['email'] if user else ''
     cursor.close()
-    return render_template('Settings.html', current_email=current_email)
+    return render_template('settings.html', current_email=current_email)
 
 #CHANGE PASSWORD
 @app.route('/change-password', methods=['GET', 'POST'])
@@ -384,7 +384,7 @@ def change_password():
                     # Handle database or other errors
                     flash('An error occurred. Please try again later.', 'danger')
 
-    return render_template('Settings.html')
+    return render_template('settings.html')
 
 #LOGOUT
 @app.route('/logout')
