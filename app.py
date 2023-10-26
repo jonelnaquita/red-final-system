@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_mysqldb import MySQL
 from datetime import datetime, timedelta
+import pytz
 import MySQLdb.cursors
 import json
 import re
@@ -748,7 +749,8 @@ def dialogflow_webhook():
     sessionID = session_info.split('/')[-1]
     query = data['text']
     response = retrieval_answer(query, doc_db, llm, conversation_history)
-    timestamp = datetime.now()
+    ph_time = pytz.timezone('Asia/Manila')
+    timestamp = datetime.now(ph_time)
     
    # Check if the MySQL connection is established
     if mysql.connection is None:
@@ -797,4 +799,4 @@ def dialogflow_webhook():
 if __name__ == "__main__":
     llm = ChatOpenAI()
     doc_db = embedding_db()
-    app.run(debug=True)
+    app.run()
