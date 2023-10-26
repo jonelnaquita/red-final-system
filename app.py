@@ -737,6 +737,10 @@ def retrieval_answer(query, doc_db, llm, conversation_history):
 
 @app.route('/dialogflow', methods=['POST'])
 def dialogflow_webhook():
+    
+    llm = ChatOpenAI()
+    doc_db = embedding_db()
+    
     data = request.get_json()
     print(json.dumps(data))
     
