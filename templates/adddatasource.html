@@ -45,7 +45,7 @@
 
 
               <!-- FAQ Input Data Source -->
-              <div id="faq-data-source" class="data-source">
+              <div id="faq-data-source" class="data-source faq-data-source">
                 <p class="card-description">
                     Enter the frequently asked questions and answers you want the chatbot to learn.
                 </p>
@@ -63,6 +63,7 @@
                               <label for="exampleInputPassword1"><b>Office of Concern</b></label>
                               <select class="form-select" name="selectOffice" aria-label="Default select example" required>
                                 <option selected>Select Office</option>
+                                <option value="General">General</option>
                                 <option value="Registrar">Registrar</option>
                                 <option value="TAO">TAO</option>
                                 <option value="Colleges">Colleges</option>
@@ -219,8 +220,7 @@
   
     // Validate the form inputs
     if (faq_textarea.value.trim() === "") {
-      // If the textarea is empty, display the message and don't proceed with the form submission
-      faq_message.style.display = "block";
+
     } else {
       // If there is text in the textarea, proceed with the form submission
       faq_message.style.display = "none"; // Hide the message
@@ -242,6 +242,7 @@
         .then(function (data) {
           // Clear the CKEditor content
           ckEditorInstance.setData('');
+          faq_textarea.value = "";
           faq_questions.value = "";
   
           // Reset the select element to the default option

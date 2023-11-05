@@ -88,12 +88,18 @@
 							<span class="menu-title">Data Source</span>
 						</a>
 					</li>
-                    <li class="nav-item">
+					<!--<li class="nav-item">
+						<a class="nav-link" href="/fallbacks">
+						<i class="mdi mdi-message-alert menu-icon"></i>
+							<span class="menu-title">Fallbacks</span>
+						</a>
+					</li>-->
+                    <!--<li class="nav-item">
 						<a class="nav-link" href="/conversations">
 						<i class="mdi mdi-message-outline menu-icon"></i>
 							<span class="menu-title">Conversations</span>
 						</a>
-					</li>
+					</li>-->
 					<li class="nav-item nav-category">HELP AND RESOURCES</li>
 					<li class="nav-item">
 						<a class="nav-link" href="/guidelines">
@@ -193,7 +199,7 @@
 	  });
 
 	  $(document).ready(function() {
-		$('#table-faq').DataTable({
+		tableFAQ = $('#table-faq').DataTable({
 		  paging: true       // Enable pagination
 		});
 	  });

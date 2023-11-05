@@ -33,17 +33,17 @@
                                         </div>
                                         <div>
                                           <p class="statistics-title">In Messages</p>
-                                          <h3 class="rate-percentage" id="in-message-count">11</h3>
+                                          <h3 class="rate-percentage" id="in-message-count"></h3>
                                           <p class="text-danger d-flex"><i class="mdi mdi-menu-down"></i><span>68.8</span></p>
                                         </div>
                                         <div>
                                           <p class="statistics-title">Average Response Time</p>
-                                          <h3 class="rate-percentage">6</h3>
+                                          <h3 class="rate-percentage" id="avg-response-time"></h3>
                                           <p class="text-success d-flex"><i class="mdi mdi-menu-up"></i><span>+0.1%</span></p>
                                         </div>
                                         <div>
                                           <p class="statistics-title">Site Visitors</p>
-                                          <h3 class="rate-percentage">17</h3>
+                                          <h3 class="rate-percentage" id="count-visitors"></h3>
                                           <p class="text-success d-flex"><i class="mdi mdi-menu-down"></i><span>+0.8%</span></p>
                                         </div>
                                     </div>
@@ -115,35 +115,35 @@
                                     <div class="col-md-6 col-lg-12 grid-margin stretch-card">
                                       <div class="card card-rounded">
                                         <div class="card-body">
-                                          <h4 class="card-title card-title-dash mb-4">Site Visitors Summary</h4>
+                                          <h4 class="card-title card-title-dash mb-4">Site Visitors Monthly Summary</h4>
                                           <div class="row">
                                             <div class="col-sm-6">
                                               <div class="d-flex justify-content-between align-items-center mb-2 mb-sm-0">
-                                                <div class="circle-progress-width">
-                                                  <div id="totalVisitors" class="progressbar-js-circle pr-2">
-                                                    
-                                                    <div class="progressbar-text" style="position: absolute; left: 50%; top: 50%; padding: 0px; margin: 0px; transform: translate(-50%, -50%); color: rgb(255, 255, 255); font-size: 0rem;">64</div></div>
-                                                </div>
-                                                <div>
-                                                  <p class="text-small mb-2">Total Visitors</p>
-                                                  <h4 class="mb-0 fw-bold">17</h4>
-                                                </div>
+                                                  <div class="circle-progress-width">
+                                                      <div id="totalVisitors" class="progressbar-js-circle pr-2">
+                                                          <div class="progressbar-text" style="position: absolute; left: 50%; top: 50%; padding: 0px; margin: 0px; transform: translate(-50%, -50%); color: rgb(255, 255, 255); font-size: 0rem;">10</div>
+                                                      </div>
+                                                  </div>
+                                                  <div>
+                                                      <p class="text-small mb-2">Total Visitors</p>
+                                                      <h4 class="mb-0 fw-bold">{{ monthly_visitors }}</h4> <!-- Display monthly visitors count -->
+                                                  </div>
                                               </div>
-                                            </div>
-                                            <div class="col-sm-6">
+                                          </div>
+                                      
+                                          <div class="col-sm-6">
                                               <div class="d-flex justify-content-between align-items-center">
-                                                <div class="circle-progress-width">
-                                                    <div id="visitperday" class="progressbar-js-circle pr-2">
-                                                        
-                                                        <div class="progressbar-text" style="position: absolute; left: 50%; top: 50%; padding: 0px; margin: 0px; transform: translate(-50%, -50%); color: rgb(255, 255, 255); font-size: 0rem;">34</div>
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                  <p class="text-small mb-2">Visits per day</p>
-                                                  <h4 class="mb-0 fw-bold">5</h4>
-                                                </div>
+                                                  <div class="circle-progress-width">
+                                                      <div id="visitperday" class="progressbar-js-circle pr-2">
+                                                          <div class="progressbar-text" style="position: absolute; left: 50%; top: 50%; padding: 0px; margin: 0px; transform: translate(-50%, -50%); color: rgb(255, 255, 255); font-size: 0rem;">100</div>
+                                                      </div>
+                                                  </div>
+                                                  <div>
+                                                      <p class="text-small mb-2">Visits per day</p>
+                                                      <h4 class="mb-0 fw-bold">{{ today_visitors }}</h4> <!-- Display daily visitors count -->
+                                                  </div>
                                               </div>
-                                            </div>
+                                          </div>
                                           </div>
                                         </div>
                                       </div>
@@ -206,7 +206,7 @@
                                           <div class="row">
                                             <div class="col-lg-12"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
                                               <div class="d-flex justify-content-between align-items-center mb-3">
-                                                <h4 class="card-title card-title-dash">Type By Amount</h4>
+                                                <h4 class="card-title card-title-dash">User Satisfaction</h4>
                                               </div>
                                               <canvas class="my-auto chartjs-render-monitor" id="doughnutChart" height="300" width="451" style="display: block; height: 240px; width: 361px;"></canvas>
                                               <div id="doughnut-chart-legend" class="mt-5 text-center"><div class="chartjs-legend"><ul class="justify-content-center"><li><span style="background-color:#1F3BB3"></span>Total</li><li><span style="background-color:#FDD0C7"></span>Net</li><li><span style="background-color:#52CDFF"></span>Gross</li><li><span style="background-color:#81DADA"></span>AVG</li></ul></div></div>
@@ -267,12 +267,17 @@
   const sessionCount = {{ session_count }};
   const inMessageCount = {{ inMessage_count }};
   const botResponseCount = {{ botMessage_count }};
+  const avgResponseTime = {{ avg_response_time }};
+  const countVisitors = {{ visitor_count }};
+
+  $('#session-count').text(sessionCount);
+  $('#in-message-count').text(inMessageCount);
+  $('#bot-response-count').text(botResponseCount);
+  $('#avg-response-time').text(avgResponseTime);
+  $('#count-visitors').text(countVisitors);
   
   // Function to update the session count
   function updateSessionCount() {
-      $('#session-count').text(sessionCount);
-      $('#in-message-count').text(inMessageCount);
-      $('#bot-response-count').text(botResponseCount);
 
       if ($("#performaneLine").length) {
         var graphGradient = document.getElementById("performaneLine").getContext('2d');
@@ -386,9 +391,11 @@
       }
 
       if ($("#status-summary").length) {
-        var statusSummaryChartCanvas = document.getElementById("status-summary").getContext('2d');;
+        var statusSummaryChartCanvas = document.getElementById("status-summary").getContext('2d');
+        var currentWeekSessionData2 = {{ current_week_session_data }};
+
         var statusData = {
-            labels: ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT",],
+            labels: ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"],
             datasets: [{
                 label: '# of Sessions',
                 data: currentWeekSessionData,
@@ -540,11 +547,179 @@
         });
         document.getElementById('marketing-overview-legend').innerHTML = marketingOverview.generateLegend();
       }
+
+
+      if ($("#doughnutChart").length) {
+        var doughnutChartCanvas = $("#doughnutChart").get(0).getContext("2d");
+        var doughnutPieData = {
+          datasets: [{
+            data: [40, 20],
+            backgroundColor: [
+              "#1F3BB3",
+              "#FDD0C7"
+            ],
+            borderColor: [
+              "#1F3BB3",
+              "#FDD0C7"
+            ],
+          }],
+    
+          // These labels appear in the legend and in the tooltips when hovering different arcs
+          labels: [
+            'Satisfied',
+            'Unsatisfied',
+          ]
+        };
+        var doughnutPieOptions = {
+          cutoutPercentage: 50,
+          animationEasing: "easeOutBounce",
+          animateRotate: true,
+          animateScale: false,
+          responsive: true,
+          maintainAspectRatio: true,
+          showScale: true,
+          legend: false,
+          legendCallback: function (chart) {
+            var text = [];
+            text.push('<div class="chartjs-legend"><ul class="justify-content-center">');
+            for (var i = 0; i < chart.data.datasets[0].data.length; i++) {
+              text.push('<li><span style="background-color:' + chart.data.datasets[0].backgroundColor[i] + '">');
+              text.push('</span>');
+              if (chart.data.labels[i]) {
+                text.push(chart.data.labels[i]);
+              }
+              text.push('</li>');
+            }
+            text.push('</div></ul>');
+            return text.join("");
+          },
+          
+          layout: {
+            padding: {
+              left: 0,
+              right: 0,
+              top: 0,
+              bottom: 0
+            }
+          },
+          tooltips: {
+            callbacks: {
+              title: function(tooltipItem, data) {
+                return data['labels'][tooltipItem[0]['index']];
+              },
+              label: function(tooltipItem, data) {
+                return data['datasets'][0]['data'][tooltipItem['index']];
+              }
+            },
+              
+            backgroundColor: '#fff',
+            titleFontSize: 14,
+            titleFontColor: '#0B0F32',
+            bodyFontColor: '#737F8B',
+            bodyFontSize: 11,
+            displayColors: false
+          }
+        };
+        var doughnutChart = new Chart(doughnutChartCanvas, {
+          type: 'doughnut',
+          data: doughnutPieData,
+          options: doughnutPieOptions
+        });
+        document.getElementById('doughnut-chart-legend').innerHTML = doughnutChart.generateLegend();
+      }
   }
 
   // Call the function to initially load session count and set an interval to periodically update it
   updateSessionCount();
   setInterval(updateSessionCount, 60000); // Update every minute, adjust as needed
+</script>
+
+<script>
+  function visitorSummary(){
+    //Chart for Site Visitors
+
+    if ($('#totalVisitors').length) {
+      var monthlyVisitorsCount = {{ monthly_visitors }};
+      var bar = new ProgressBar.Circle(totalVisitors, {
+        color: '#fff',
+        // This has to be the same size as the maximum width to
+        // prevent clipping
+        strokeWidth: 15,
+        trailWidth: 15, 
+        easing: 'easeInOut',
+        duration: 1400,
+        text: {
+          autoStyleContainer: false
+        },
+        from: {
+          color: '#52CDFF',
+          width: 15
+        },
+        to: {
+          color: '#677ae4',
+          width: 15
+        },
+        // Set default step function for all animate calls
+        step: function(state, circle) {
+          circle.path.setAttribute('stroke', state.color);
+          circle.path.setAttribute('stroke-width', state.width);
+  
+          var value = Math.round(circle.value() * 100);
+          if (value === 0) {
+            circle.setText('');
+          } else {
+            circle.setText(value);
+          }
+  
+        }
+      });
+  
+      bar.text.style.fontSize = '0rem';
+      bar.animate(monthlyVisitorsCount / 100); // Number from 0.0 to 1.0
+    }
+
+    if ($('#visitperday').length) {
+      var dailyVisitorsCount = {{ today_visitors }};
+      var bar = new ProgressBar.Circle(visitperday, {
+        color: '#fff',
+        // This has to be the same size as the maximum width to
+        // prevent clipping
+        strokeWidth: 15,
+        trailWidth: 15,
+        easing: 'easeInOut',
+        duration: 1400,
+        text: {
+          autoStyleContainer: false
+        },
+        from: {
+          color: '#34B1AA',
+          width: 15
+        },
+        to: {
+          color: '#677ae4',
+          width: 15
+        },
+        // Set default step function for all animate calls
+        step: function(state, circle) {
+          circle.path.setAttribute('stroke', state.color);
+          circle.path.setAttribute('stroke-width', state.width);
+  
+          var value = Math.round(circle.value() * 100);
+          if (value === 0) {
+            circle.setText('');
+          } else {
+            circle.setText(value);
+          }
+  
+        }
+      });
+  
+      bar.text.style.fontSize = '0rem';
+      bar.animate(dailyVisitorsCount / 100); // Number from 0.0 to 1.0
+    }
+  }
+
+  visitorSummary();
 </script>
 
 {% endblock %}

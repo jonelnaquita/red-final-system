@@ -38,6 +38,73 @@
                                     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
                                         <button class="dropdown-item bulk-delete-button" id="bulkDeleteButton">Delete Selected</button>
                                     </div>
+                                </div> 
+                                <div class="dropdown me-2" id="filter-office">
+                                    <button class="btn btn-outline-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                        Filter
+                                    </button>
+                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
+                                        <div class="form-check form-check-flat form-check-primary" style="margin-left: 10px;">
+                                            <label class="form-check-label">
+                                                <input type="checkbox" name="office" class="form-check-input checkbox-search" value="Registrar" data-source="Registrar">Registrar
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-flat form-check-primary" style="margin-left: 10px;">
+                                            <label class="form-check-label">
+                                                <input type="checkbox" name="office" class="form-check-input checkbox-search" value="TAO" data-source="TAO">TAO
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-flat form-check-primary" style="margin-left: 10px;">
+                                            <label class="form-check-label">
+                                                <input type="checkbox" name="office" class="form-check-input checkbox-search" value="Colleges" data-source="Colleges">Colleges
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-flat form-check-primary" style="margin-left: 10px;">
+                                            <label class="form-check-label">
+                                                <input type="checkbox" name="office" class="form-check-input checkbox-search" value="Clinic" data-source="Clinic">Clinic
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-flat form-check-primary" style="margin-left: 10px;">
+                                            <label class="form-check-label">
+                                                <input type="checkbox" name="office" class="form-check-input checkbox-search" value="SOA" data-source="SOA">SOA
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-flat form-check-primary" style="margin-left: 10px;">
+                                            <label class="form-check-label">
+                                                <input type="checkbox" name="office" class="form-check-input checkbox-search" value="Scholarship" data-source="Scholarship">Scholarship
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-flat form-check-primary" style="margin-left: 10px;">
+                                            <label class="form-check-label">
+                                                <input type="checkbox" name="office" class="form-check-input checkbox-search" value="Accounting" data-source="Accounting">Accounting
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-flat form-check-primary" style="margin-left: 10px;">
+                                            <label class="form-check-label">
+                                                <input type="checkbox" name="office" class="form-check-input checkbox-search" value="Cashier" data-source="Cashier">Cashier
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-flat form-check-primary" style="margin-left: 10px;">
+                                            <label class="form-check-label">
+                                                <input type="checkbox" name="office" class="form-check-input checkbox-search" value="ICT Services" data-source="ICT Services">ICT Services
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-flat form-check-primary" style="margin-left: 10px;">
+                                            <label class="form-check-label">
+                                                <input type="checkbox" name="office" class="form-check-input checkbox-search" value="Guidance" data-source="Guidance">Guidance
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-flat form-check-primary" style="margin-left: 10px;">
+                                            <label class="form-check-label">
+                                                <input type="checkbox" name="office" class="form-check-input checkbox-search" value="RGO" data-source="RGO">RGO
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-flat form-check-primary" style="margin-left: 10px;">
+                                            <label class="form-check-label">
+                                                <input type="checkbox" name="office" class="form-check-input checkbox-search" value="Library" data-source="Library">Library
+                                            </label>
+                                        </div>                                                                                
+                                    </div>
                                 </div>                                
                                 <button type="button" class="btn btn-outline-dark btn-fw me-2" onclick="toggleStatistics()"><i class="mdi mdi-chart-line menu-icon"></i>View Stats</button>
                             </div>
@@ -128,18 +195,19 @@
                         <div class="tab-pane fade active show" id="pills-profile" role="tabpanel" aria-labelledby="faq-tab">
                             <!--FAQ Tab Content Here-->
                             <div class="table-responsive">
-                                <table id="table-faq" class="table">
+                                <table id="table-faq" class="table display">
                                 <thead>
                                     <tr>
                                         <th></th>
                                         <th>FAQ</th>
                                         <th>Characters</th>
                                         <th>Status</th>
+                                        <th>Office</th>
                                         <th>Date Added</th>
                                         <th></th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="table-body">
                                     {% for row in dataFAQ %}
                                     <tr>
                                         <td style="width: 5%;">
@@ -172,8 +240,11 @@
                                         <td>
                                             <div class="badge badge-outline-success rounded">{{ row.status }}</div>
                                         </td>
+                                        <td>
+                                            <div class="badge badge-info">{{ row.office }}</div>
+                                        </td>
                                         <td>{{ row.dateAdded.strftime('%B %d, %Y')}} </td>
-                                        <td style="width: 5%;">
+                                        <td style="width: 5%;"> 
                                             <div class="dropdown me-2">
                                                 <button class="btn btn-outline-dark dropdown-toggle" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
                                                     <i class="mdi mdi-dots-vertical menu-icon"></i>
@@ -189,7 +260,7 @@
                                 </table>
                               </div>
                         </div>
-                      </div>
+                    </div>
                 </div>
             </div>
           </div>
@@ -507,6 +578,50 @@
         }
     });    
 </script>
+
+<script>
+    $(document).ready(function () {
+        // Handle checkbox changes
+        $('.checkbox-search').on('change', function () {
+            updateTable();
+        });
+
+        // Function to update the table
+        function updateTable() {
+            var selectedOffices = [];
+            $('.checkbox-search:checked').each(function () {
+                selectedOffices.push($(this).data('source'));
+            });
+
+            // Use the DataTables API to filter and refresh the table
+            tableFAQ.column(4).search(selectedOffices.join('|'), true, false).draw();
+        }
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+        // Initial state
+        $('#filter-office').show();
+
+        // Handle tab changes
+        $('#pills-tab a[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
+            var targetTab = $(e.target).attr("href"); // Get the target tab
+            if (targetTab === "#pills-home") {
+                $('#filter-office').hide(); // Hide the Filter dropdown for the "pills-home" tab
+            } else if (targetTab === "#pills-profile") {
+                $('#filter-office').show(); // Show the Filter dropdown for the "pills-profile" tab
+            }
+        });
+    });
+</script>
+
+
+
+
+
+
+
 
 {% endblock %}
 

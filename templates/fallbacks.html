@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+<html>
+<body>
+{% block content%}
+<head>
+    
+</head>
+    <div class="main-panel">
+        <div class="content-wrapper">
+            <div class="row">
+                <div class="col grid-margin stretch-card">
+                    <div class="card">
+                      <div class="card-body">
+                          <h2>FAQs</h2>
+                          <p class="card-description">
+                              Add and manage the FAQs used to train the chatbot.
+                          </p>                
+                            <div class="tab-pane fade active show" id="pills-profile" role="tabpanel" aria-labelledby="faq-tab">
+                                <!--FAQ Tab Content Here-->
+                                <div class="table-responsive">
+                                    <table id="table-faq" class="table">
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th>Question</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td width="10%"></td>
+                                            <td>
+                                                <li class="d-block">
+                                                    <div class="form-check w-100">
+                                                      <label class="form-check-label">
+                                                        Lorem Ipsum is simply dummy text of the printing <i class="input-helper rounded"></i>
+                                                        <i class="input-helper"></i></label>
+                                                        <div class="d-flex mt-2">
+                                                            <div class="ps-4 text-small me-3">24 June 2020</div>
+                                                            <a type="button" class="" style="margin-right: 5px;">Add to Data Source</a>
+                                                            <button type="button" class="btn btn-danger btn-sm">Delete</button>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                    </table>
+                                    </div>
+                            </div>
+                      </div>
+                    </div>
+                </div>
+                </div>
+        </div>
+    </div>
+{% endblock %}
+</body>
+
+{% block scripts %}
+
+{% endblock %}
+
+</html>

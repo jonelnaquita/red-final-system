@@ -1,11 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_mysqldb import MySQL
 from datetime import datetime, timedelta
+from apiip import apiip
 import pytz
 import MySQLdb.cursors
 import json
 import re
 import bcrypt
+import requests
 
 import os
 import pinecone
@@ -19,14 +21,15 @@ from langchain.chains import RetrievalQA
 from langchain.chat_models import ChatOpenAI
 
 from langchain.chains import ConversationChain
+from langchain.memory import ConversationBufferWindowMemory
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
-from langchain.prompts import (
-    SystemMessagePromptTemplate,
-    HumanMessagePromptTemplate,
+from langchain.prompts.chat import (
     ChatPromptTemplate,
-    MessagesPlaceholder
+    SystemMessagePromptTemplate,
+    AIMessagePromptTemplate,
+    HumanMessagePromptTemplate,
 )
-from langchain import PromptTemplate
+from langchain.schema import AIMessage, HumanMessage, SystemMessage
 
 from bs4 import BeautifulSoup
 
@@ -42,6 +45,7 @@ app.config['MYSQL_PORT'] = 19876
 app.config['MYSQL_USER'] = 'admin'
 app.config['MYSQL_PASSWORD'] = 'redchatbot'   
 app.config['MYSQL_DB'] = 'redcms'
+app.config['MYSQL_DATABASE_URI'] = 'mysql://admin:redchatbot@mysql-152093-0.cloudclusters.net:19876/redcms?init_command=SET time_zone=+08:00'
 
 mysql = MySQL(app)
 
@@ -63,9 +67,27 @@ embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
 def page_not_found(error):
     return render_template('404page.html'), 404
 
-
 @app.route('/')
 def home():
+    # Your IPinfo API key
+    ipinfo_client = apiip('889f150d-cf76-4567-96bf-ee7309aa5864')
+    info = ipinfo_client.get_location()
+    
+    print(info)
+
+    # Extract location data
+    visitor_ip = info.get('ip')
+    city = info.get('city')
+    region = info.get('regionName')
+    country = info.get('countryName')
+    ph_time = pytz.timezone('Asia/Manila')
+    timestamp = datetime.now(ph_time)
+
+    # Save location data to MySQL database
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("INSERT INTO tblvisitors (ip_address, city, region, country, date) VALUES (%s, %s, %s, %s, %s)",
+                   (visitor_ip, city, region, country, timestamp))
+    mysql.connection.commit()
     return render_template('index.html')
 
 def check_password(password, hashed_password):
@@ -111,19 +133,21 @@ def dashboard():
     
     try:
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("SELECT COUNT(DISTINCT sessionID) AS session_count, COUNT(incomingMessage) AS inMessages FROM tblconversations")
+        cursor.execute("SELECT COUNT(DISTINCT sessionID) AS session_count, COUNT(incomingMessage) AS inMessages, ROUND(AVG(responseTime), 2) AS avg_response_time FROM tblconversations")
         data = cursor.fetchone()
         
-        cursor2 = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor2.execute("SELECT COUNT(botMessage) AS botMessages FROM tblconversations WHERE botMessage != ''")
-        data2 = cursor2.fetchone()
+        cursor.execute("SELECT COUNT(botMessage) AS botMessages FROM tblconversations WHERE botMessage != ''")
+        data2 = cursor.fetchone()
         
+        #################################################################################################
         # Get the current date
-        today = datetime.now()
-        
+        ph_time = pytz.timezone('Asia/Manila')
+        today = datetime.now(ph_time)
+
         # Calculate the start and end dates for the current week (Sunday to Saturday)
         days_until_sunday = (today.weekday() - 6) % 7
-        start_of_week = today - timedelta(days=days_until_sunday)
+        start_of_week = today - timedelta(days=today.weekday())
+        # Calculate the end of the week (Sunday)
         end_of_week = start_of_week + timedelta(days=6)
         
         # Calculate the start and end dates for the previous week
@@ -168,10 +192,15 @@ def dashboard():
             if day_name in days:
                 day_index = days.index(day_name)
                 last_week_session_data[day_index] = row['session_count']
+                
+        #################################################################################################
         
         session_count = data['session_count']
         inMessage_count = data['inMessages']
+        avg_response_time = data['avg_response_time']
         botMessage_count = data2['botMessages']
+        
+        #################################################################################################
         
         # Query data for the current week
         query = (
@@ -184,6 +213,8 @@ def dashboard():
         current_week_data = cursor.fetchall()
         # Calculate the total sessions for the current week
         total_sessions = sum(row['session_count'] for row in current_week_data)
+        
+        #################################################################################################
         
         # Query data for total sessions per month
         query = (
@@ -203,6 +234,23 @@ def dashboard():
         for row in monthly_session_data:
             month_index = row['month'] - 1  # MySQL months are 1-based
             session_month[month_index] = row['session_count']
+            
+        ############################### GET VISITOR DATA ################################################
+        
+        cursor.execute("SELECT COUNT(ip_address) AS visitor_number FROM tblvisitors")
+        visitors = cursor.fetchone()
+        visitor_count = visitors['visitor_number']
+        
+        # Fetch the visitor count for the day and month
+        current_date = datetime.now().strftime('%Y-%m-%d')
+        cursor.execute("SELECT COUNT(ip_address) AS visitor_number FROM tblvisitors WHERE date = %s", (current_date,))
+        today_visitors = cursor.fetchone()
+
+        cursor.execute("SELECT COUNT(ip_address) AS visitor_number FROM tblvisitors WHERE MONTH(date) = MONTH(CURDATE())")
+        monthly_visitors = cursor.fetchone()
+        
+        today_visitors = today_visitors['visitor_number']
+        monthly_visitors = monthly_visitors['visitor_number']
         
         cursor.close()
         
@@ -211,10 +259,14 @@ def dashboard():
             session_count = session_count,
             inMessage_count = inMessage_count,
             botMessage_count = botMessage_count,
+            avg_response_time = avg_response_time,
+            visitor_count = visitor_count,
+            today_visitors = today_visitors,
+            monthly_visitors = monthly_visitors,
             current_week_session_data = current_week_session_data,
             last_week_session_data = last_week_session_data,
             total_sessions=total_sessions,
-            session_month=session_month
+            session_month=session_month,
         )
     except Exception as e:
         return jsonify({"error": str(e)})
@@ -293,6 +345,13 @@ def adddatasource():
         # If 'login' session variable is not set or is False, redirect to login page
         return redirect(url_for('login'))
     return render_template('adddatasource.html')
+
+@app.route('/fallbacks')
+def fallbacks():
+    if 'login' not in session or not session['login']:
+        # If 'login' session variable is not set or is False, redirect to login page
+        return redirect(url_for('login'))
+    return render_template('fallbacks.html')
 
 
 @app.route('/conversations')
@@ -606,6 +665,7 @@ def editFAQData():
 @app.route('/save-faq', methods=['POST'])
 def save_faq():
     if request.method == 'POST':
+        dataText = ""
         question = request.form['questions']
         answer = request.form['answers']
         dataSource = "FAQ"
@@ -646,7 +706,7 @@ def save_faq():
 
             # Create a query to save in MySQL
             cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            cursor.execute("INSERT INTO tbldata (vectorID, dataSource, dataFAQQuestion, dataFAQAnswer, characters, status, office) VALUES (%s, %s, %s, %s, %s, %s, %s)", (vectorID, dataSource, question, removeStyles(answer), characters, status, office))
+            cursor.execute("INSERT INTO tbldata (vectorID, dataSource, dataText, dataFAQQuestion, dataFAQAnswer, characters, status, office) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", (vectorID, dataSource, dataText, question, removeStyles(answer), characters, status, office))
             mysql.connection.commit()
             cursor.close()
             
@@ -670,49 +730,13 @@ def save_faq():
     return "Invalid request"
 
 
-#Handle Conversation for Dialogflow
-@app.route('/dialogflow-webhook', methods=['POST'])
-def handle_dialogflow():
-    data = request.get_json()
-    
-    # Extract relevant data from the Dialogflow webhook response
-    responseID = data['responseId']
-    query_text = data['queryResult']['queryText']
-    fulfillment_text = data['queryResult'].get('fulfillmentText', '')
-    action = data['queryResult']['action']
-    intent_name = data['queryResult']['intent']['displayName']
-
-    # Create a query to save in MySQL
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("INSERT INTO tblconversations (sessionID, incomingMessage, botMessage, intentName, action) VALUES (%s, %s, %s, %s, %s)", (responseID, query_text, fulfillment_text, intent_name, action))
-    mysql.connection.commit()
-    cursor.close()
-    
-    try:
-        action = data['queryResult']['action']
-        if action == 'input.unknown':
-            
-            # Return the response to Dialogflow
-            return jsonify({
-                'fulfillmentText': 'This response is from webhook'
-            })
-        else:
-            # Handle other actions here if needed
-            return jsonify({
-                'fulfillmentText': 'Action not recognized.'
-            })
-    except:
-        return jsonify({
-            'fulfillmentText': 'Error occurred.'
-        })
-
-
-conversation_history = []
+conversation_memory = ConversationBufferWindowMemory(k=10)
 
 def embedding_db():
     # We use the OpenAI embedding model
     index_name = "red-chatbot-final"
     embeddings = OpenAIEmbeddings()
+
     pinecone.init(
         api_key=PINECONE_API_KEY,
         environment=PINECONE_ENV
@@ -721,50 +745,59 @@ def embedding_db():
     doc_db = Pinecone.from_existing_index(index_name, embeddings)
     return doc_db
 
-def retrieval_answer(query, doc_db, llm, conversation_history):
-    # Append the query to the conversation history
-    conversation_history.append({"role": "user", "content": query})
-
+def retrieval_answer(query, doc_db, llm, conversation_memory):
     qa = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type='stuff',
         retriever=doc_db.as_retriever(),
     )
     result = qa.run(query)
-    
-    # Append the response to the conversation history
-    conversation_history.append({"role": "assistant", "content": result})
+
+    # Append the response to the conversation memory
+    conversation_memory.save_context({"input": query}, {"output": result})
     return result
 
 @app.route('/dialogflow', methods=['POST'])
 def dialogflow_webhook():
-    
     llm = ChatOpenAI()
     doc_db = embedding_db()
     
     data = request.get_json()
     print(json.dumps(data))
     
-    session_info = data['sessionInfo']['session']  # Access the sessionInfo field
-    sessionID = session_info.split('/')[-1]
-    query = data['text']
-    response = retrieval_answer(query, doc_db, llm, conversation_history)
-    ph_time = pytz.timezone('Asia/Manila')
-    timestamp = datetime.now(ph_time)
-    
-   # Check if the MySQL connection is established
-    if mysql.connection is None:
-        raise Exception("MySQL connection is not established.")
-    
-    # Create a cursor and execute the SQL query
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("INSERT INTO tblconversations (sessionID, incomingMessage, botMessage, timestamp) VALUES (%s, %s, %s, %s)", (sessionID, query, response, timestamp))
-    mysql.connection.commit()
-    cursor.close()
-    
-    
     try:
-        return jsonify(
+        # Record the start time before processing the request
+        start_time = datetime.now()
+        
+        session_info = data['sessionInfo']['session']  # Access the sessionInfo field
+        sessionID = session_info.split('/')[-1]
+        query = data['text']
+        response = retrieval_answer(query, doc_db, llm, conversation_memory)
+        ph_time = pytz.timezone('Asia/Manila')
+        timestamp = datetime.now(ph_time)
+        response_time = (timestamp - timestamp).total_seconds()
+        
+        # Record the end time after processing the request
+        end_time = datetime.now()
+        
+        # Calculate response time in seconds
+        response_time = (end_time - start_time).total_seconds()
+        
+        # Check if the MySQL connection is established
+        if mysql.connection is None:
+            raise Exception("MySQL connection is not established.")
+        
+        # Create a cursor and execute the SQL query
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("INSERT INTO tblconversations (sessionID, incomingMessage, botMessage, responseTime, timestamp) VALUES (%s, %s, %s, %s, %s)", (sessionID, query, response, response_time, timestamp))
+        mysql.connection.commit()
+        cursor.close()
+        
+        # You can access and review the conversation history using conversation_memory
+        conversation_history = conversation_memory.load_memory_variables({})
+        print(conversation_history)
+    
+        response_json = jsonify(
             {
                 'fulfillment_response': {
                     'messages': [
@@ -778,10 +811,12 @@ def dialogflow_webhook():
             }
         )
         
+        return response_json
+        
     except Exception as e:
         error_message = f"Error: {str(e)}"
         print(error_message)  # Print the error message to the console
-        return jsonify(
+        error_response = jsonify(
             {
                 'fulfillment_response': {
                     'messages': [
@@ -794,9 +829,9 @@ def dialogflow_webhook():
                 }
             }
         )
-
-
+        return error_response
+        
 if __name__ == "__main__":
     llm = ChatOpenAI()
     doc_db = embedding_db()
-    app.run()
+    app.run(debug=True)
