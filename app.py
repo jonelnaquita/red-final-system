@@ -53,10 +53,11 @@ app = Flask(__name__,
 
 app.secret_key = 'xyzsdfg'
 
-app.config['MYSQL_HOST'] = "localhost"
-app.config['MYSQL_USER'] = "root"
-app.config['MYSQL_PASSWORD'] = ""
-app.config['MYSQL_DB'] = "redcms"
+app.config['MYSQL_HOST'] = "mysql-152093-0.cloudclusters.net"
+app.config['MYSQL_USER'] = "admin"
+app.config['MYSQL_PORT'] = 19876
+app.config['MYSQL_PASSWORD'] = "hXtRVj9v"
+app.config['MYSQL_DB'] = "redchatbot"
 #app.config['MYSQL_DATABASE_URI'] = 'mysql://admin:redchatbot@mysql-152093-0.cloudclusters.net:19876/redcms?init_command=SET time_zone=+08:00'
 
 #Register Views
