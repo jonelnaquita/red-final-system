@@ -8,28 +8,41 @@ import json
 import re
 import bcrypt
 import requests
+from views import views
+from utils import utils
+from fetchGraphData import fetchData
+
+import xml.etree.ElementTree as ET
+import emoji
 
 import os
 import pinecone
 import openai
+import tiktoken
 from dotenv import load_dotenv
 from langchain.document_loaders import DirectoryLoader
+from langchain.chains.question_answering import load_qa_chain
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import Pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.chains import RetrievalQA
 from langchain.chat_models import ChatOpenAI
 
-from langchain.chains import ConversationChain
-from langchain.memory import ConversationBufferWindowMemory
-from langchain.chains.conversation.memory import ConversationBufferWindowMemory
-from langchain.prompts.chat import (
+from langchain.chains import LLMChain, ConversationChain
+from langchain.chains.conversation.memory import (ConversationBufferMemory, 
+                                                  ConversationSummaryMemory, 
+                                                  ConversationBufferWindowMemory,
+                                                  ConversationKGMemory)
+from langchain.callbacks import get_openai_callback
+from langchain.prompts import (
     ChatPromptTemplate,
     SystemMessagePromptTemplate,
     AIMessagePromptTemplate,
     HumanMessagePromptTemplate,
+    MessagesPlaceholder,
 )
-from langchain.schema import AIMessage, HumanMessage, SystemMessage
+from langchain.prompts import PromptTemplate
+from sentence_transformers import SentenceTransformer
 
 from bs4 import BeautifulSoup
 
@@ -40,12 +53,16 @@ app = Flask(__name__,
 
 app.secret_key = 'xyzsdfg'
 
-app.config['MYSQL_HOST'] = 'mysql-152093-0.cloudclusters.net'
-app.config['MYSQL_PORT'] = 19876
-app.config['MYSQL_USER'] = 'admin'
-app.config['MYSQL_PASSWORD'] = 'redchatbot'   
-app.config['MYSQL_DB'] = 'redcms'
-app.config['MYSQL_DATABASE_URI'] = 'mysql://admin:redchatbot@mysql-152093-0.cloudclusters.net:19876/redcms?init_command=SET time_zone=+08:00'
+app.config['MYSQL_HOST'] = "localhost"
+app.config['MYSQL_USER'] = "root"
+app.config['MYSQL_PASSWORD'] = ""
+app.config['MYSQL_DB'] = "redcms"
+#app.config['MYSQL_DATABASE_URI'] = 'mysql://admin:redchatbot@mysql-152093-0.cloudclusters.net:19876/redcms?init_command=SET time_zone=+08:00'
+
+#Register Views
+app.register_blueprint(views)
+app.register_blueprint(utils)
+app.register_blueprint(fetchData)
 
 mysql = MySQL(app)
 
@@ -100,6 +117,10 @@ def hash_password(password):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # Check if the user is already logged in
+    if 'login' in session and session['login']:
+        return redirect(url_for('dashboard'))
+
     message = ''
     if request.method == 'POST' and 'email' in request.form and 'password' in request.form:
         email = request.form['email']
@@ -116,12 +137,12 @@ def login():
                 session['login'] = True
                 session['admin'] = user['id']
                 session['email'] = user['email']
-                
-                return redirect(url_for('dashboard'))
+
+                return redirect(url_for('dashboard'))   
             message = 'Wrong password!'    
-            return render_template('login.html', message = message) 
+            return render_template('login.html', message=message) 
         message = 'Email address is not registered!'    
-        return render_template('login.html', message = message)          
+        return render_template('login.html', message=message)          
     return render_template('login.html', message=message)
 
 
@@ -140,58 +161,9 @@ def dashboard():
         data2 = cursor.fetchone()
         
         #################################################################################################
-        # Get the current date
-        ph_time = pytz.timezone('Asia/Manila')
-        today = datetime.now(ph_time)
-
-        # Calculate the start and end dates for the current week (Sunday to Saturday)
-        days_until_sunday = (today.weekday() - 6) % 7
-        start_of_week = today - timedelta(days=today.weekday())
-        # Calculate the end of the week (Sunday)
-        end_of_week = start_of_week + timedelta(days=6)
-        
-        # Calculate the start and end dates for the previous week
-        start_of_last_week = start_of_week - timedelta(days=7)
-        end_of_last_week = end_of_week - timedelta(days=7)
+        # Get the current data
         
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        # Query data for the current week
-        query_current_week = (
-            "SELECT DAYNAME(timestamp) AS day, COUNT(DISTINCT sessionID) AS session_count "
-            "FROM tblconversations "
-            "WHERE DATE(timestamp) BETWEEN %s AND %s "
-            "GROUP BY day"
-        )
-        cursor.execute(query_current_week, (start_of_week, end_of_week))
-        current_week_data = cursor.fetchall()
-        
-        # Query data for the previous week
-        query_last_week = (
-            "SELECT DAYNAME(timestamp) AS day, COUNT(DISTINCT sessionID) AS session_count "
-            "FROM tblconversations "
-            "WHERE DATE(timestamp) BETWEEN %s AND %s "
-            "GROUP BY day"
-        )
-        cursor.execute(query_last_week, (start_of_last_week, end_of_last_week))
-        last_week_data = cursor.fetchall()
-
-        # Prepare data for JavaScript (current and last week's session data)
-        days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"]
-        current_week_session_data = [0, 0, 0, 0, 0, 0, 0]  # Initialize data for each day of the current week
-        last_week_session_data = [0, 0, 0, 0, 0, 0, 0]  # Initialize data for each day of the previous week
-        
-        for row in current_week_data:
-            day_name = row['day'].upper()
-            if day_name in days:
-                day_index = days.index(day_name)
-                current_week_session_data[day_index] = row['session_count']
-        
-        for row in last_week_data:
-            day_name = row['day'].upper()
-            if day_name in days:
-                day_index = days.index(day_name)
-                last_week_session_data[day_index] = row['session_count']
                 
         #################################################################################################
         
@@ -199,41 +171,6 @@ def dashboard():
         inMessage_count = data['inMessages']
         avg_response_time = data['avg_response_time']
         botMessage_count = data2['botMessages']
-        
-        #################################################################################################
-        
-        # Query data for the current week
-        query = (
-            "SELECT DATE(timestamp) AS day, COUNT(DISTINCT sessionID) AS session_count "
-            "FROM tblconversations "
-            "WHERE DATE(timestamp) BETWEEN %s AND %s "
-            "GROUP BY day"
-        )
-        cursor.execute(query, (start_of_week, end_of_week))
-        current_week_data = cursor.fetchall()
-        # Calculate the total sessions for the current week
-        total_sessions = sum(row['session_count'] for row in current_week_data)
-        
-        #################################################################################################
-        
-        # Query data for total sessions per month
-        query = (
-            "SELECT "
-            "MONTH(timestamp) AS month, "
-            "COUNT(DISTINCT sessionID) AS session_count "
-            "FROM tblconversations "
-            "GROUP BY month"
-        )
-        cursor.execute(query)
-        monthly_session_data = cursor.fetchall()
-
-        # Prepare data for JavaScript
-        months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
-        session_month = [0] * 12  # Initialize data for each month
-
-        for row in monthly_session_data:
-            month_index = row['month'] - 1  # MySQL months are 1-based
-            session_month[month_index] = row['session_count']
             
         ############################### GET VISITOR DATA ################################################
         
@@ -252,6 +189,7 @@ def dashboard():
         today_visitors = today_visitors['visitor_number']
         monthly_visitors = monthly_visitors['visitor_number']
         
+        
         cursor.close()
         
         return render_template(
@@ -263,11 +201,8 @@ def dashboard():
             visitor_count = visitor_count,
             today_visitors = today_visitors,
             monthly_visitors = monthly_visitors,
-            current_week_session_data = current_week_session_data,
-            last_week_session_data = last_week_session_data,
-            total_sessions=total_sessions,
-            session_month=session_month,
         )
+        
     except Exception as e:
         return jsonify({"error": str(e)})
 
@@ -337,7 +272,6 @@ def delete_selected_rows():
         return jsonify({'success': True, 'message': 'Selected rows deleted successfully'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
-
 
 @app.route('/add-data-source')
 def adddatasource():
@@ -728,40 +662,53 @@ def save_faq():
             return jsonify({"message": f"An error occurred: {str(e)}"})
         
     return "Invalid request"
+      
+index = pinecone.Index(INDEX_NAME)
 
-
-conversation_memory = ConversationBufferWindowMemory(k=10)
-
-def embedding_db():
-    # We use the OpenAI embedding model
-    index_name = "red-chatbot-final"
-    embeddings = OpenAIEmbeddings()
-
-    pinecone.init(
-        api_key=PINECONE_API_KEY,
-        environment=PINECONE_ENV
+def find_match(input):
+    embed_query = openai.Embedding.create(
+        input=input,
+        engine=EMBEDDING_MODEL
     )
+    input_em = embed_query['data'][0]['embedding']
+    result = index.query(input_em, top_k=3, includeMetadata=True)
+    return result['matches'][0]['metadata']['text']+"\n"+result['matches'][1]['metadata']['text']+"\n"+result['matches'][2]['metadata']['text']
 
-    doc_db = Pinecone.from_existing_index(index_name, embeddings)
-    return doc_db
+conversation_memory = ConversationBufferWindowMemory(k=3, return_messages=True)
 
-def retrieval_answer(query, doc_db, llm, conversation_memory):
-    qa = RetrievalQA.from_chain_type(
-        llm=llm,
-        chain_type='stuff',
-        retriever=doc_db.as_retriever(),
+llm = ChatOpenAI(model_name="gpt-3.5-turbo", 
+openai_api_key=OPENAI_API_KEY)
+
+def query_refiner(conversation):
+
+    response = openai.Completion.create(
+    model="gpt-3.5-turbo-instruct",
+    prompt=f"Provide the second question you see on the context provided. Don't rephrase anything! \n\nContext: \n{conversation}\n\n\nRefined Query:",
+    temperature=0,
+    max_tokens=20,
+    top_p=1,
+    frequency_penalty=0,
+    presence_penalty=0
     )
-    result = qa.run(query)
-
-    # Append the response to the conversation memory
-    conversation_memory.save_context({"input": query}, {"output": result})
-    return result
+    return response['choices'][0]['text']
 
 @app.route('/dialogflow', methods=['POST'])
 def dialogflow_webhook():
-    llm = ChatOpenAI()
-    doc_db = embedding_db()
-    
+    # Parse the XML file
+    tree = ET.parse('xml/instructions.xml')
+    root = tree.getroot()
+
+    # Extract text from all "item" elements
+    items_text = [element.text for element in root.findall('.//item')]
+    instructions = '\n'.join(items_text)
+                    
+    # Create the template string with the extracted text
+    system_msg_template = SystemMessagePromptTemplate.from_template(template=f"""{instructions}'""")
+    human_msg_template = HumanMessagePromptTemplate.from_template(template="{input}")
+    prompt_template = ChatPromptTemplate.from_messages([system_msg_template, MessagesPlaceholder(variable_name="history"), human_msg_template])
+    conversation = ConversationChain(memory=conversation_memory, prompt=prompt_template, llm=llm, verbose=True)
+
+    # Request JSON from Dialogflow CX    
     data = request.get_json()
     print(json.dumps(data))
     
@@ -771,15 +718,22 @@ def dialogflow_webhook():
         
         session_info = data['sessionInfo']['session']  # Access the sessionInfo field
         sessionID = session_info.split('/')[-1]
-        query = data['text']
-        response = retrieval_answer(query, doc_db, llm, conversation_memory)
+        query = str(data['text'])
+        context = find_match(query)
+        response = conversation.predict(input=f"Context:\n {context} \n\n Query:\n{query}")
+        botMessage = emoji.demojize(response)
+        
+        print(context)
+        
+        refined_query = query_refiner(context)
+        print(refined_query)
+        
         ph_time = pytz.timezone('Asia/Manila')
         timestamp = datetime.now(ph_time)
         response_time = (timestamp - timestamp).total_seconds()
         
         # Record the end time after processing the request
         end_time = datetime.now()
-        
         # Calculate response time in seconds
         response_time = (end_time - start_time).total_seconds()
         
@@ -789,26 +743,55 @@ def dialogflow_webhook():
         
         # Create a cursor and execute the SQL query
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("INSERT INTO tblconversations (sessionID, incomingMessage, botMessage, responseTime, timestamp) VALUES (%s, %s, %s, %s, %s)", (sessionID, query, response, response_time, timestamp))
+        cursor.execute("INSERT INTO tblconversations (sessionID, incomingMessage, botMessage, responseTime, timestamp) VALUES (%s, %s, %s, %s, %s)", (sessionID, query, botMessage, response_time, timestamp))
         mysql.connection.commit()
         cursor.close()
-        
-        # You can access and review the conversation history using conversation_memory
-        conversation_history = conversation_memory.load_memory_variables({})
-        print(conversation_history)
     
         response_json = jsonify(
             {
-                'fulfillment_response': {
-                    'messages': [
-                        {
-                            'text': {
-                                'text': [response]
-                            }
+            "fulfillmentResponse": {
+                "messages": [
+                    {
+                        "text": {
+                            "text": [response]
                         }
-                    ]
-                }
+                    },
+                    {
+                        "payload": {
+                            "richContent": [
+                                [
+                                    {
+                                        "options": [
+                                            {
+                                                "text": [refined_query]
+                                            },
+                                        ],
+                                        "type": "chips"
+                                    }
+                                ]
+                            ],
+                        },
+                        "payload":{
+                            "botcopy": [
+                                {
+                                "suggestions": [
+                                    {
+                                    "title": refined_query,
+                                    "action": {
+                                        "message": {
+                                        "command": refined_query,
+                                        "type": "training"
+                                        }
+                                    }
+                                    }
+                                ]
+                                }
+                            ]
+                        } 
+                    }
+                ]
             }
+        }
         )
         
         return response_json
@@ -822,7 +805,7 @@ def dialogflow_webhook():
                     'messages': [
                         {
                             'text': {
-                                'text': [error_message]  # Include the error message in the response
+                                'text': "Sorry for the inconvenience. There's a problem with the server. Please try again later!"  # Include the error message in the response
                             }
                         }
                     ]
@@ -830,8 +813,42 @@ def dialogflow_webhook():
             }
         )
         return error_response
+    
+@app.route('/dialogflow-ratings', methods=['POST'])
+def dialogflow_ratings():
+    data = request.get_json()
+    print(json.dumps(data))
+    
+    session_info = data['sessionInfo']['session']  # Access the sessionInfo field
+    sessionID = session_info.split('/')[-1]
+    feedback = data['sessionInfo']['parameters']['feedback']
+    
+    ratingSatisfied = data['sessionInfo']['parameters']['rating']['satisfied']
+    
+    if ratingSatisfied:
+        rating = "Satisfied"
+    else:
+        rating = "Unsatisfied"
+    
+    ph_time = pytz.timezone('Asia/Manila')
+    timestamp = datetime.now(ph_time)
+    
+    # Create a cursor and execute the SQL query
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    try:
+        cursor.execute("INSERT INTO tblratings (sessionID, rating, feedback, timestamp) VALUES (%s, %s, %s, %s)",
+                       (sessionID, rating, feedback, timestamp))
+        mysql.connection.commit()
+    except Exception as e:
+        # Handle any database-related errors here
+        print("Database error:", str(e))
+    finally:
+        cursor.close()
+
+    # Return a response to the client
+    return jsonify({"message": "Rating data successfully recorded."})
+    
+
         
 if __name__ == "__main__":
-    llm = ChatOpenAI()
-    doc_db = embedding_db()
     app.run(debug=True)

@@ -5,6 +5,7 @@
 {% block content%}
 <head>
     <link rel="stylesheet" href="static/css/custom/settings.css">
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css">
 </head>
 <div class="main-panel">
     <div class="card">
@@ -63,19 +64,21 @@
                         <h4 class="card-title">Change Email</h4>
                         <p class="card-description">Update your email address</p>
                         <form class="forms-sample" method="POST">
-                            <div class="form-group">
-                                <label for="exampleInputUsername1">Current Email Address</label>
-                                <input type="email" id="exampleInputUsername1" class="form-control" name="current_email" value="{{ current_email }}" readonly>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="exampleInputUsername1">Current Email Address</label>
+                                    <input type="email" id="exampleInputUsername1" class="form-control" name="current_email" value="{{ current_email }}" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="exampleInputEmail1">New Email Address</label>
+                                    <input type="email" id="exampleInputEmail1" class="form-control" name="new_email" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Enter your password</label>
+                                    <input type="password" class="form-control" name="current_password" required>
+                                </div>
+                                <button type="submit" class="btn btn-danger me-2">Update Email</button>
                             </div>
-                            <div class="form-group">
-                                <label for="exampleInputEmail1">New Email Address</label>
-                                <input type="email" id="exampleInputEmail1" class="form-control" name="new_email" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Enter your password</label>
-                                <input type="password" class="form-control" name="current_password" required>
-                            </div>
-                            <button type="submit" class="btn btn-danger me-2">Update Email</button>
                         </form>
                     </div>
                 </div>
@@ -85,82 +88,103 @@
                         <h4 class="card-title">Change Password</h4>
                         <p class="card-description">Update your password</p>
                         <form action="/change-password" method="POST" class="forms-sample">
-                            <div class="form-group">
-                                <label for="exampleInputOldPassword">Current Password</label>
-                                <input type="password" id="exampleInputOldPassword" name="current_password" class="form-control" required>
+                            <div class="col-md-6">
+                                <div class="form-group input-with-toggle">
+                                    <label for="OldPassword">Current Password</label>
+                                    <input type="password" id="OldPassword" name="current_password" class="form-control form-control-lg" placeholder="Current password" required>
+                                    <i class="uil uil-eye-slash toggle" id="toggleOldPassword" onclick="togglePasswordVisibility('OldPassword', 'toggleOldPassword')"></i>
+                                </div>
+    
+                                <div class="form-group input-with-toggle">
+                                    <label for="new_password">New Password</label>
+                                    <input id="new_password" class="form-control form-control-lg" name="new_password" placeholder="New password" type="password" aria-invalid="true" onkeyup="validatePassword()" required>
+                                    <i class="uil uil-eye-slash toggle" id="togglePassword" onclick="togglePasswordVisibility('new_password', 'togglePassword')"></i>
+                                </div>
+                                <div class="password-labels" id="password-labels" style="display: none;">
+                                    <!-- Add the MDI icon to each label -->
+                                    <label id="length-error" class="error mt-2 text-danger">
+                                        <span class="mdi mdi-information-outline"></span> Must have more than 8 characters.
+                                    </label>
+                                    <label id="capital-error" class="error mt-2 text-danger">
+                                        <span class="mdi mdi-information-outline"></span> Must contain a capital letter.
+                                    </label>
+                                    <label id="lowercase-error" class="error mt-2 text-danger">
+                                        <span class="mdi mdi-information-outline"></span> Must contain a lowercase letter.
+                                    </label>
+                                    <label id="special-char-error" class="error mt-2 text-danger">
+                                        <span class="mdi mdi-information-outline"></span> Must contain a special character.
+                                    </label>
+                                </div>
+                        
+                                <div class="form-group input-with-toggle">
+                                    <label for="confirmPassword">Re-enter your password</label>
+                                    <input type="password" id="confirmPassword" name="confirm_password" class="form-control form-control-lg" placeholder="Re-enter password" onkeyup="validatePassword()" required>
+                                    <i class="uil uil-eye-slash toggle" id="toggleConfirmPassword" onclick="togglePasswordVisibility('confirmPassword', 'toggleConfirmPassword')"></i>
+                                </div>
+                                <div class="password-labels" id="match-labels" style="display: none;">
+                                    <label id="password-match-error" class="error text-danger">
+                                        <span class="mdi mdi-information-outline"></span> Passwords do not match.
+                                    </label>
+                                </div>
                             </div>
-
-                            <div class="form-group">
-                                <label for="new_password">New Password</label>
-                                <input id="new_password" class="form-control " name="new_password" type="password" aria-invalid="true" onkeyup="validatePassword()" required>
-                                
-                                <!-- Add the MDI icon to each label -->
-                                <label id="length-error" class="error mt-2 text-danger">
-                                    <span class="mdi mdi-information-outline"></span> Must have more than 8 characters.
-                                </label>
-                                <label id="capital-error" class="error mt-2 text-danger">
-                                    <span class="mdi mdi-information-outline"></span> Must contain a capital letter.
-                                </label>
-                                <label id="lowercase-error" class="error mt-2 text-danger">
-                                    <span class="mdi mdi-information-outline"></span> Must contain a lowercase letter.
-                                </label>
-                                <label id="special-char-error" class="error mt-2 text-danger">
-                                    <span class="mdi mdi-information-outline"></span> Must contain a special character.
-                                </label>
-                            </div>
-                    
-                            <div class="form-group">
-                                <label for="ConfirmPassword">Re-enter your password</label>
-                                <input type="password" id="confirmPassword" name="confirm_password" class="form-control" onkeyup="validatePassword()" required>
-                                <label id="password-match-error" class="error mt-2 text-danger">
-                                    <span class="mdi mdi-information-outline"></span> Passwords do not match.
-                                </label>
-                            </div>
+                        
                     
                             <script>
                                 function validatePassword() {
                                     const newPasswordInput = document.getElementById("new_password");
                                     const confirmPasswordInput = document.getElementById("confirmPassword");
+                                    const passwordLabels = document.getElementById("password-labels");
+                                    const matchLabels = document.getElementById("match-labels");
                                     const lengthError = document.getElementById("length-error");
                                     const capitalError = document.getElementById("capital-error");
                                     const lowercaseError = document.getElementById("lowercase-error");
                                     const specialCharError = document.getElementById("special-char-error");
                                     const passwordMatchError = document.getElementById("password-match-error");
                                     const submitButton = document.getElementById("submit-button");
-                            
+                                
                                     const newPassword = newPasswordInput.value;
                                     const confirmPassword = confirmPasswordInput.value;
-                            
-                                    // Define regular expressions for each condition
-                                    const minLength = 8;
-                                    const hasCapital = /[A-Z]/.test(newPassword);
-                                    const hasLowercase = /[a-z]/.test(newPassword);
-                                    const hasSpecialChar = /[!@#$%^&*()_+{}]/.test(newPassword);
-                            
-                                    // Check each condition and show/hide error labels accordingly
-                                    lengthError.style.display = newPassword.length >= minLength ? "none" : "block";
-                                    capitalError.style.display = hasCapital ? "none" : "block";
-                                    lowercaseError.style.display = hasLowercase ? "none" : "block";
-                                    specialCharError.style.display = hasSpecialChar ? "none" : "block";
-                            
-                                    // Check if passwords match and show/hide the password match error label
-                                    passwordMatchError.style.display = newPassword === confirmPassword ? "none" : "block";
-
-                                    if (
-                                        newPassword.length >= minLength &&
-                                        hasCapital &&
-                                        hasLowercase &&
-                                        hasSpecialChar &&
-                                        newPassword === confirmPassword
-                                    ) {
-                                        submitButton.disabled = false; // Enable the button
+                                
+                                    // Check if newPassword is not empty before displaying password labels
+                                    if (newPassword.trim() !== "") {
+                                        passwordLabels.style.display = "block";
+                                
+                                        // Define regular expressions for each condition
+                                        const minLength = 8;
+                                        const hasCapital = /[A-Z]/.test(newPassword);
+                                        const hasLowercase = /[a-z]/.test(newPassword);
+                                        const hasSpecialChar = /[!@#$%^&*()_+{}]/.test(newPassword);
+                                
+                                        // Check each condition and show/hide error labels accordingly
+                                        lengthError.style.display = newPassword.length >= minLength ? "none" : "block";
+                                        capitalError.style.display = hasCapital ? "none" : "block";
+                                        lowercaseError.style.display = hasLowercase ? "none" : "block";
+                                        specialCharError.style.display = hasSpecialChar ? "none" : "block";
+                                
+                                        // Check if passwords match and show/hide the password match error label
+                                        passwordMatchError.style.display = newPassword === confirmPassword ? "none" : "block";
+                                
+                                        // Show match labels if confirmPassword is not empty
+                                        matchLabels.style.display = confirmPassword.trim() !== "" ? "block" : "none";
+                                
+                                        if (
+                                            newPassword.length >= minLength &&
+                                            hasCapital &&
+                                            hasLowercase &&
+                                            hasSpecialChar &&
+                                            newPassword === confirmPassword
+                                        ) {
+                                            submitButton.disabled = false; // Enable the button
+                                        } else {
+                                            submitButton.disabled = true; // Disable the button
+                                        }
                                     } else {
-                                        submitButton.disabled = true; // Disable the button
+                                        // Hide password and match labels when newPassword is empty
+                                        passwordLabels.style.display = "none";
+                                        matchLabels.style.display = "none";
                                     }
                                 }
-                            </script>
-                            
-                            
+                                </script>
                             
                             <button type="submit" class="btn btn-danger me-2" id="submit-button" disabled>Update Password</button>
                         </form>
@@ -237,6 +261,24 @@
  });
  });
 </script>
+
+<script>
+    function togglePasswordVisibility(inputId, toggleId) {
+        const passwordInput = document.getElementById(inputId);
+        const toggleButton = document.getElementById(toggleId);
+
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            toggleButton.classList.remove("uil-eye-slash");
+            toggleButton.classList.add("uil-eye");
+        } else {
+            passwordInput.type = "password";
+            toggleButton.classList.remove("uil-eye");
+            toggleButton.classList.add("uil-eye-slash");
+        }
+    }
+</script>
+
 {% endblock %}
 
 </body>

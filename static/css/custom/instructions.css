@@ -1,0 +1,8 @@
+.custom-height {
+    height: 200px; /* Set the desired height in pixels */
+}
+
+.ck-editor__editable {
+    max-height: 400px; /* Set your desired height here */
+    min-height: 200px;
+}

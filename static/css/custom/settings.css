@@ -1,0 +1,32 @@
+.input-with-toggle {
+    position: relative;
+}
+
+.input-with-toggle input {
+    padding-right: 35px; /* Adjust the value as needed to make space for the icon */
+}
+
+.input-with-toggle .toggle {
+    position: absolute;
+    right: 10px; /* Adjust the value as needed to position the icon */
+    top: 70%;
+    transform: translateY(-50%);
+    cursor: pointer;
+}
+
+.toggle{
+    font-size: 20px;
+}
+
+.password-labels label{
+    font-size: 12px;
+}
+
+.password-labels label span{
+    font-size: 12px;
+}
+
+.password-labels{
+    margin-top: -15px;
+    margin-bottom: 10px;
+}

@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+<html>
+<body>
+{% block content%}
+  <head>
+    <link rel="stylesheet" href="static/css/custom/usersatisfaction.css">
+  </head>
+    <div class="main-panel">
+        <div class="content-wrapper">
+            <div class="row">
+              <div class="col-lg-3 d-flex flex-column">
+                <div class="row flex-grow">
+                  <div class="col-12 col-lg-4 col-lg-12 grid-margin stretch-card">
+                    <div class="card card-rounded satisfied">
+                      <div class="card-body">
+                        <div>
+                          <h4 class="card-title card-title-dash text-white">SATISFIED USERS</h4>
+                         </div>
+                         <div class="row">
+                          <div class="col-sm-6">
+                            <div class="pt-4 mt-4 text-white">
+                              <p><span class="fs-1" id="satisfied-number"></span><span class="fs-4" id="total-rating-satisfied"></span></p>
+                              <p class="fs-14">Satisfied This Month</p>
+                            </div>
+                          </div>
+                          <div class="col-sm-6 d-none d-lg-block">
+                            <div class="circle-progress-width">
+                              <div id="totalVisitors" class="progressbar-js-circle pr-2">
+                                <div class="progressbar-text" style="position: absolute; left: 50%; top: 50%; padding: 0px; margin: 0px; transform: translate(-50%, -50%); color: rgb(255, 255, 255); font-size: 0rem;">
+                                  <div class="progressbar-text" id="progressbar-text-satisfied" style="position: absolute; left: 50%; top: 50%; padding: 0px; margin: 0px; transform: translate(-50%, -50%); color: rgb(255, 255, 255); font-size: 1.875rem; font-weight: bold;">
+                                    
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                         </div> 
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-lg-4 col-lg-12 grid-margin stretch-card">
+                    <div class="card card-rounded unsatisfied">
+                      <div class="card-body">
+                        <div>
+                          <h4 class="card-title card-title-dash text-white">UNSATISFIED USER</h4>
+                         </div>
+                         <div class="row">
+                          <div class="col-sm-6">
+                            <div class="pt-4 mt-4 text-white">
+                              <p><span class="fs-1" id="unsatisfied-number"></span><span class="fs-4" id="total-rating-unsatisfied"></span></p>
+                              <p class="fs-14">Unsatisfied This Month</p>
+                            </div>
+                          </div>
+                          <div class="col-sm-6 d-none d-lg-block">
+                            <div class="circle-progress-width">
+                              <div id="visitperday" class="progressbar-js-circle pr-2">
+                                <div class="progressbar-text" style="position: absolute; left: 50%; top: 50%; padding: 0px; margin: 0px; transform: translate(-50%, -50%); color: rgb(255, 255, 255); font-size: 0rem;">
+                                  <div class="progressbar-text" id="progressbar-text-unsatisfied" style="position: absolute; left: 50%; top: 50%; padding: 0px; margin: 0px; transform: translate(-50%, -50%); color: rgb(255, 255, 255); font-size: 1.875rem; font-weight: bold;">
+                                    
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                         </div> 
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-lg-6 col-lg-9 grid-margin stretch-card">
+                <div class="card card-rounded">
+                  <div class="card-body">
+                    <div class="d-sm-flex justify-content-between align-items-start">
+                      <div>
+                       <h4 class="card-title card-title-dash">User Satisfaction</h4>
+                       <h5 class="card-subtitle card-subtitle-dash">User Satisfaction Ratings Per Day</h5>
+                      </div>
+                      <div>
+                        <div class="dropdown">
+                          <button class="btn btn-light dropdown-toggle toggle-dark btn-sm mb-0 me-0" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="icon-download"></i> Export </button>
+                          <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
+                            <a class="dropdown-item" href="#">PDF</a>
+                            <a class="dropdown-item" href="#">CSV</a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="d-sm-flex align-items-center mt-1 justify-content-between">
+                      <div class="col-lg-4">
+                        <div class="input-group input-daterange d-flex align-items-center">
+                          <input type="text" class="form-control date-from" id="date-from">
+                          <div class="input-group-addon mx-4">to</div>
+                          <input type="text" class="form-control date-to" id="date-to">
+                          <button type="button" class="btn btn-success btn-sm" id="filter-btn">Filter</button>
+                        </div>                    
+                      </div>
+                      <div id="performance-line-legend">
+                        <div class="chartjs-legend">
+                          <ul><li><span style="background-color:#1F3BB3"></span>Satisfied</li>
+                            <li><span style="background-color:#52CDFF"></span>Unsatisfied</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="chartjs-wrapper mt-4"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
+                      <canvas id="performaneLine" style="display: block; width: 775px; height: 350px;" width="775" height="350" class="chartjs-render-monitor"></canvas> 
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+</body>
+
+{% block scripts %}
+<script>
+  $(document).ready(function (){
+    if ($("#performaneLine").length) {
+      var graphGradient = document.getElementById("performaneLine").getContext('2d');
+      var graphGradient2 = document.getElementById("performaneLine").getContext('2d');
+      var saleGradientBg = graphGradient.createLinearGradient(5, 0, 5, 100);
+      saleGradientBg.addColorStop(0, 'rgba(26, 115, 232, 0.18)');
+      saleGradientBg.addColorStop(1, 'rgba(26, 115, 232, 0.02)');
+      var saleGradientBg2 = graphGradient2.createLinearGradient(100, 0, 50, 150);
+      saleGradientBg2.addColorStop(0, 'rgba(0, 208, 255, 0.19)');
+      saleGradientBg2.addColorStop(1, 'rgba(0, 208, 255, 0.03)');
+      var salesTopData = {
+          labels: ["SUN","sun", "MON", "mon", "TUE","tue", "WED", "wed", "THU", "thu", "FRI", "fri", "SAT"],
+          datasets: [{
+              label: 'This week',
+              data: [50, 110, 60, 290, 200, 115, 130, 170, 90, 210, 240, 280, 200],
+              backgroundColor: saleGradientBg,
+              borderColor: [
+                  '#1F3BB3',
+              ],
+              borderWidth: 1.5,
+              fill: true, // 3: no fill
+              pointBorderWidth: 1,
+              pointRadius: [4, 4, 4, 4, 4,4, 4, 4, 4, 4,4, 4, 4],
+              pointHoverRadius: [2, 2, 2, 2, 2,2, 2, 2, 2, 2,2, 2, 2],
+              pointBackgroundColor: ['#1F3BB3)', '#1F3BB3', '#1F3BB3', '#1F3BB3','#1F3BB3)', '#1F3BB3', '#1F3BB3', '#1F3BB3','#1F3BB3)', '#1F3BB3', '#1F3BB3', '#1F3BB3','#1F3BB3)'],
+              pointBorderColor: ['#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff',],
+          },{
+            label: 'Last week',
+            data: [30, 150, 190, 250, 120, 150, 130, 20, 30, 15, 40, 95, 180],
+            backgroundColor: saleGradientBg2,
+            borderColor: [
+                '#52CDFF',
+            ],
+            borderWidth: 1.5,
+            fill: true, // 3: no fill
+            pointBorderWidth: 1,
+            pointRadius: [0, 0, 0, 4, 0],
+            pointHoverRadius: [0, 0, 0, 2, 0],
+            pointBackgroundColor: ['#52CDFF)', '#52CDFF', '#52CDFF', '#52CDFF','#52CDFF)', '#52CDFF', '#52CDFF', '#52CDFF','#52CDFF)', '#52CDFF', '#52CDFF', '#52CDFF','#52CDFF)'],
+              pointBorderColor: ['#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff',],
+        }]
+      };
+  
+      var salesTopOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+          scales: {
+              yAxes: [{
+                  gridLines: {
+                      display: true,
+                      drawBorder: false,
+                      color:"#F0F0F0",
+                      zeroLineColor: '#F0F0F0',
+                  },
+                  ticks: {
+                    beginAtZero: false,
+                    autoSkip: true,
+                    maxTicksLimit: 4,
+                    fontSize: 10,
+                    color:"#6B778C"
+                  }
+              }],
+              xAxes: [{
+                gridLines: {
+                    display: false,
+                    drawBorder: false,
+                },
+                ticks: {
+                  beginAtZero: false,
+                  autoSkip: true,
+                  maxTicksLimit: 7,
+                  fontSize: 10,
+                  color:"#6B778C"
+                }
+            }],
+          },
+          legend:false,
+          legendCallback: function (chart) {
+            var text = [];
+            text.push('<div class="chartjs-legend"><ul>');
+            for (var i = 0; i < chart.data.datasets.length; i++) {
+              console.log(chart.data.datasets[i]); // see what's inside the obj.
+              text.push('<li>');
+              text.push('<span style="background-color:' + chart.data.datasets[i].borderColor + '">' + '</span>');
+              text.push(chart.data.datasets[i].label);
+              text.push('</li>');
+            }
+            text.push('</ul></div>');
+            return text.join("");
+          },
+          
+          elements: {
+              line: {
+                  tension: 0.4,
+              }
+          },
+          tooltips: {
+              backgroundColor: 'rgba(31, 59, 179, 1)',
+          }
+      }
+      var salesTop = new Chart(graphGradient, {
+          type: 'line',
+          data: salesTopData,
+          options: salesTopOptions
+      });
+      document.getElementById('performance-line-legend').innerHTML = salesTop.generateLegend();
+    }
+  });
+</script>
+
+<script>
+  $(document).ready(function () {
+      fetchRatings();
+
+      function fetchRatings() {
+          $.ajax({
+              type: "GET",
+              url: "/fetch-ratings",
+              success: function (data) {
+                  updateRatingContent(data.total_ratings, data.satisfied_number, data.unsatisfied_number);
+                  updateProgressBar(data.satisfied_percentage, data.unsatisfied_percentage);
+              },
+              error: function (error) {
+                  console.error("Error fetching ratings:", error);
+              }
+          });
+      }
+
+      function updateRatingContent(totalRatings, satisfiedNumber, unsatisfiedNumber) {
+        $("#total-rating-satisfied").text("/" + totalRatings);
+        $("#total-rating-unsatisfied").text("/" + totalRatings);
+        $("#satisfied-number").text(satisfiedNumber);
+        $("#unsatisfied-number").text(unsatisfiedNumber);
+      }
+
+      function updateProgressBar(satisfiedPercentage, unsatisfiedPercentage) {
+        $("#progressbar-text-satisfied").text(parseFloat(satisfiedPercentage).toFixed(2));
+        $("#progressbar-text-unsatisfied").text(parseFloat(unsatisfiedPercentage).toFixed(2));
+
+        if ($('#totalVisitors').length) {
+          var bar = new ProgressBar.Circle(totalVisitors, {
+            color: '#fff',
+            // This has to be the same size as the maximum width to
+            // prevent clipping
+            strokeWidth: 15,
+            trailWidth: 15, 
+            easing: 'easeInOut',
+            duration: 1400,
+            text: {
+              autoStyleContainer: false
+            },
+            from: {
+              color: '#52CDFF',
+              width: 15
+            },
+            to: {
+              color: '#677ae4',
+              width: 15
+            },
+            // Set default step function for all animate calls
+            step: function(state, circle) {
+              circle.path.setAttribute('stroke', state.color);
+              circle.path.setAttribute('stroke-width', state.width);
+      
+              var value = Math.round(circle.value() * 100);
+              if (value === 0) {
+                circle.setText('');
+              } else {
+                circle.setText(value);
+              }
+      
+            }
+          });
+      
+          bar.text.style.fontSize = '0rem';
+          bar.animate(satisfiedPercentage / 100); // Number from 0.0 to 1.0
+        }
+        if ($('#visitperday').length) {
+          var bar = new ProgressBar.Circle(visitperday, {
+            color: '#fff',
+            // This has to be the same size as the maximum width to
+            // prevent clipping
+            strokeWidth: 15,
+            trailWidth: 15,
+            easing: 'easeInOut',
+            duration: 1400,
+            text: {
+              autoStyleContainer: false
+            },
+            from: {
+              color: '#34B1AA',
+              width: 15
+            },
+            to: {
+              color: '#677ae4',
+              width: 15
+            },
+            // Set default step function for all animate calls
+            step: function(state, circle) {
+              circle.path.setAttribute('stroke', state.color);
+              circle.path.setAttribute('stroke-width', state.width);
+      
+              var value = Math.round(circle.value() * 100);
+              if (value === 0) {
+                circle.setText('');
+              } else {
+                circle.setText(value);
+              }
+      
+            }
+          });
+      
+          bar.text.style.fontSize = '0rem';
+          bar.animate(unsatisfiedPercentage / 100); // Number from 0.0 to 1.0
+        }
+      } 
+  });
+</script>
+
+{% endblock %}
+
+</html>

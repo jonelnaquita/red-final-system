@@ -28,10 +28,29 @@
   if ($('input[name="date-range"]').length) {
     $('input[name="date-range"]').daterangepicker();
   }
-  if($('.input-daterange').length) {
-    $('.input-daterange input').each(function() {
-      $(this).datepicker('clearDates');
+
+  if ($('.input-daterange').length) {
+    // Initialize the datepicker for both date inputs
+    $('#date-from, #date-to').datepicker({
+      format: 'yyyy-mm-dd',
+      todayHighlight: true,
+      autoclose: true
     });
-    $('.input-daterange').datepicker({});
+  
+    // Get the current date
+    var currentDate = new Date();
+  
+    // Calculate the last day of the 7-day range before the current date
+    var lastDay = new Date(currentDate);
+    lastDay.setDate(currentDate.getDate() - 6);
+  
+    // Set the initial date values for date-from and date-to
+    $('#date-from').datepicker('setDate', lastDay);
+    $('#date-to').datepicker('setDate', currentDate);
+  
+    // Set the maxDate for both date inputs to the current date
+    $('#date-from, #date-to').datepicker('setEndDate', currentDate);
   }
+  
+  
 })(jQuery);

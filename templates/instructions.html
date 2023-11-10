@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+<html>
+<body>
+{% block content%}
+<head>
+  <link rel="stylesheet" href="static/css/custom/instructions.css">
+</head>
+    <div class="main-panel">
+        <div class="content-wrapper">
+            <div class="row">
+              <div class="col-12 col-lg-4 col-lg-12 grid-margin stretch-card">
+                <div class="card card-rounded">
+                  <div class="card-body">
+                    <h2>INSTRUCTIONS</h2>
+                    <p class="card-description">
+                      Provide instructions to the chatbot to tailor its responses.
+                    </p>
+                    <div class="col-md-6">
+                      <div class="instruction-area">
+                        <div class="d-flex align-items-center justify-content-between" style="margin-top: 10px;">
+                          <textarea class="form-control custom-height" id="instruction-textarea" name="text" placeholder="Enter the instruction" style="height: 100px; width: 100%"></textarea>
+                        </div>
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-danger" id="save" style="margin-top: 20px;">Save</button>
+                    </div>                  
+                  </div>
+                </div>
+                <div class="col-12 col-lg-4 col-lg-12 grid-margin stretch-card">
+                  <div class="card card-rounded">
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-12">
+                          <div class="table-responsive">
+                            <table id="instruction-table" class="table">
+                              <thead>
+                                  <tr>
+                                      <th>Instruction</th>
+                                      <th>Action</th>
+                                  </tr>
+                              </thead>
+                              <tbody>
+                                  {% for instruction in items %}
+                                  <tr>
+                                      <td>{{ instruction.text }}</td>
+                                      <td><button type="button" class="btn delete-button" data-id="{{ instruction.id }}"><i class="mdi mdi-delete me-2"></i></button></td>
+                                  </tr>
+                                  {% endfor %}
+                              </tbody>
+                            </table>                          
+                          </div>
+                        </div>
+                      </div>
+                    </div>                  
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+</body>
+
+{% block scripts %}
+
+<script>
+  $(document).ready(function() {
+    var instructionTable = $('#instruction-table').DataTable(); // Initialize DataTable
+
+    $("#save").click(function() {
+      // Get the text from the textarea
+      var text = $("#instruction-textarea").val();
+
+      // Send the data to the Flask route using AJAX
+      $.ajax({
+        type: "POST",
+        url: "/save-instructions",
+        data: {
+          text: text
+        },
+        success: function(response) {
+          // Show a success Toastr message
+          toastr.success(response.message);
+
+          // Clear the textarea content
+          $("#instruction-textarea").val("");
+
+          // Refresh the whole page
+          location.reload();
+        },
+        error: function(error) {
+          // Show an error Toastr message
+          toastr.error("Error saving data.");
+        }
+      });
+    });
+  });
+</script>
+
+
+<script>
+  $(document).ready(function() {
+      $(".delete-button").click(function() {
+          var $deleteButton = $(this);
+          var id = $(this).data("id");
+
+          // Send an AJAX request to delete the data item
+          $.ajax({
+              type: "DELETE",
+              url: "/delete-instruction/" + id, // Pass the ID as a parameter
+              success: function(deleteResponse) {
+                  if (deleteResponse.success) {
+                      // Remove the row from the table
+                      $deleteButton.closest("tr").remove();
+                      toastr.success("Item deleted successfully.");
+                  } else {
+                      toastr.error(deleteResponse.message);
+                  }
+              },
+              error: function(error) {
+                  toastr.error("Error deleting item.");
+              }
+          });
+      });
+  });
+</script>
+
+
+    
+{% endblock %}
+
+</html>

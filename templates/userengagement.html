@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+<html>
+<body>
+{% block content%}
+    <div class="main-panel">
+        <div class="content-wrapper">
+            <div class="row">
+              <div class="col-12 col-lg-4 col-lg-12 grid-margin stretch-card">
+                <div class="card card-rounded">
+                  <div class="card-body">
+                    <div class="d-sm-flex justify-content-between align-items-start">
+                      <div>
+                       <h4 class="card-title card-title-dash">User Engagement Line Chart</h4>
+                       <h5 class="card-subtitle card-subtitle-dash">This line chart provides the user engagement data on the chatbot based on its date range.</h5>
+                      </div>
+                      <div>
+                        <div class="dropdown">
+                          <button class="btn btn-light dropdown-toggle toggle-dark btn-sm mb-0 me-0" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="icon-download"></i> Export </button>
+                          <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
+                            <a class="dropdown-item" href="#">PDF</a>
+                            <a class="dropdown-item" href="#">CSV</a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="d-sm-flex align-items-center mt-1 justify-content-between">
+                      <div></div>
+                      <div id="performance-line-legend"><div class="chartjs-legend"><ul><li><span style="background-color:#1F3BB3"></span>This week</li><li><span style="background-color:#52CDFF"></span>Last week</li></ul></div></div>
+                    </div>
+                    <div class="row">
+                      <div class="col-lg-4">
+                        <div class="input-group input-daterange d-flex align-items-center">
+                          <input type="text" class="form-control date-from" id="date-from">
+                          <div class="input-group-addon mx-4">to</div>
+                          <input type="text" class="form-control date-to" id="date-to">
+                          <button type="button" class="btn btn-success btn-sm" id="filter-btn">Filter</button>
+                        </div>                    
+                      </div>
+                    </div>
+                    <div class="chartjs-wrapper mt-4"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
+                      <canvas id="performaneLine" style="display: block; width: 775px; height: 150px;" width="775" height="150" class="chartjs-render-monitor"></canvas> 
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-lg-4 col-lg-12 grid-margin stretch-card">
+                <div class="card card-rounded">
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-12">
+                        <div>
+                          <div class="dropdown">
+                            <button class="btn btn-light dropdown-toggle toggle-dark btn-sm mb-0 me-0 float-right" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="icon-download"></i> Export </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
+                              <a class="dropdown-item" href="#">PDF</a>
+                              <a class="dropdown-item" href="#">CSV</a>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="table-responsive">
+                          <table class="table dataTable" id="userEngagementTable">
+                            <thead>
+                              <tr>
+                                <th>Date</th>
+                                <th>User/Session</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>                  
+                </div>
+              </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+</body>
+
+{% block scripts %}
+
+<script>
+  $(document).ready(function () {
+      // Fetch user engagement data on page load
+      fetchUserEngagementData();
+      filterUserEngagementData()
+
+      $("#filter-btn").on("click", function () {
+        filterUserEngagementData();
+      });
+
+      function filterUserEngagementData() {
+        var dateFrom = $("#date-from").val();
+        var dateTo = $("#date-to").val();
+
+        $.ajax({
+            type: "GET",
+            url: "/filter-user-engagement-data",
+            data: { date_from: dateFrom, date_to: dateTo },
+            success: function (response) {
+                updateSessionCount(response.date_labels, response.session_data);
+            },
+            error: function (error) {
+                console.error("Error fetching user engagement data:", error);
+            }
+        });
+      }
+
+      function fetchUserEngagementData() {
+          $.ajax({
+              type: "GET",
+              url: "/user-engagement-data",
+              success: function (response) {
+                  updateSessionCount(response.date_labels, response.session_data);
+              },
+              error: function (error) {
+                  console.error("Error fetching user engagement data:", error);
+              }
+          });
+      }
+
+      // Function to update the session count
+  function updateSessionCount(labels, data, dateRange) {
+
+    if ($("#performaneLine").length) {
+      var graphGradient = document.getElementById("performaneLine").getContext('2d');
+      var graphGradient2 = document.getElementById("performaneLine").getContext('2d');
+      var saleGradientBg = graphGradient.createLinearGradient(5, 0, 5, 100);
+      saleGradientBg.addColorStop(0, 'rgba(26, 115, 232, 0.18)');
+      saleGradientBg.addColorStop(1, 'rgba(26, 115, 232, 0.02)');
+      var saleGradientBg2 = graphGradient2.createLinearGradient(100, 0, 50, 150);
+      saleGradientBg2.addColorStop(0, 'rgba(0, 208, 255, 0.19)');
+      saleGradientBg2.addColorStop(1, 'rgba(0, 208, 255, 0.03)');
+      var salesTopData = {
+          labels: labels,
+          datasets: [{
+              label: "Number of User",
+              data: data,
+              backgroundColor: saleGradientBg,
+              borderColor: [
+                  '#1F3BB3',
+              ],
+              borderWidth: 1.5,
+              fill: true, // 3: no fill
+              pointBorderWidth: 1,
+              pointRadius: [4, 4, 4, 4, 4,4, 4, 4, 4, 4,4, 4, 4],
+              pointHoverRadius: [2, 2, 2, 2, 2,2, 2, 2, 2, 2,2, 2, 2],
+              pointBackgroundColor: ['#1F3BB3)', '#1F3BB3', '#1F3BB3', '#1F3BB3','#1F3BB3)', '#1F3BB3', '#1F3BB3', '#1F3BB3','#1F3BB3)', '#1F3BB3', '#1F3BB3', '#1F3BB3','#1F3BB3)'],
+              pointBorderColor: ['#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff',],
+          }]
+      };
+  
+      var salesTopOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+          scales: {
+              yAxes: [{
+                  gridLines: {
+                      display: true,
+                      drawBorder: false,
+                      color:"#F0F0F0",
+                      zeroLineColor: '#F0F0F0',
+                  },
+                  ticks: {
+                    beginAtZero: false,
+                    autoSkip: true,
+                    maxTicksLimit: 4,
+                    fontSize: 10,
+                    color:"#6B778C"
+                  }
+              }],
+              xAxes: [{
+                gridLines: {
+                    display: false,
+                    drawBorder: false,
+                },
+                ticks: {
+                  beginAtZero: false,
+                  autoSkip: true,
+                  maxTicksLimit: 7,
+                  fontSize: 10,
+                  color:"#6B778C"
+                }
+            }],
+          },
+          legend:false,
+          legendCallback: function (chart) {
+            var text = [];
+            text.push('<div class="chartjs-legend"><ul>');
+            for (var i = 0; i < chart.data.datasets.length; i++) {
+              console.log(chart.data.datasets[i]); // see what's inside the obj.
+              text.push('<li>');
+              text.push('<span style="background-color:' + chart.data.datasets[i].borderColor + '">' + '</span>');
+              text.push(chart.data.datasets[i].label);
+              text.push('</li>');
+            }
+            text.push('</ul></div>');
+            return text.join("");
+          },
+          
+          elements: {
+              line: {
+                  tension: 0.4,
+              }
+          },
+          tooltips: {
+              backgroundColor: 'rgba(31, 59, 179, 1)',
+          }
+      }
+      var salesTop = new Chart(graphGradient, {
+          type: 'line',
+          data: salesTopData,
+          options: salesTopOptions
+      });
+      document.getElementById('performance-line-legend').innerHTML = salesTop.generateLegend();
+    }
+  }
+
+  });
+</script>
+
+<script>
+  $(document).ready(function () {
+      // Fetch user engagement data on page load
+      fetchUserEngagement();
+
+      function fetchUserEngagement() {
+          $.ajax({
+              type: "GET",  // Change the method to GET
+              url: "/fetch-user-engagement",
+              success: function (response) {
+                  updateTable(response.labels, response.data);
+              },
+              error: function (error) {
+                  console.error("Error fetching user engagement:", error);
+              }
+          });
+      }
+
+      function updateTable(labels, data) {
+          var tableBody = $("#userEngagementTable tbody");
+
+          // Clear existing table rows
+          tableBody.empty();
+
+          // Populate table with fetched data
+          for (var i = 0; i < labels.length; i++) {
+              var newRow = $("<tr>");
+              newRow.append($("<td>").text(labels[i]));
+              newRow.append($("<td>").text(data[i]));
+              tableBody.append(newRow);
+          }
+      }
+
+      updateTable();
+      setInterval(updateTable, 60000);
+  });
+</script>
+{% endblock %}
+
+</html>
