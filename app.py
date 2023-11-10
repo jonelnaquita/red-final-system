@@ -42,7 +42,6 @@ from langchain.prompts import (
     MessagesPlaceholder,
 )
 from langchain.prompts import PromptTemplate
-from sentence_transformers import SentenceTransformer
 
 from bs4 import BeautifulSoup
 
