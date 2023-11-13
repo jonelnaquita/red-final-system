@@ -19,6 +19,137 @@ fetchData = Blueprint("fetchData",
                 static_url_path="/static"
                 )
 
+################### HORIZONTAL DASHBOARD #####################
+
+#SessionID Increase/Decrease
+@fetchData.route("/fetch-session-change", methods=["GET"])
+def fetch_session_change():
+    # Calculate date ranges for this week and last week
+    today = datetime.now().date()
+    last_week_start = today - timedelta(days=today.weekday() + 7)
+    last_week_end = last_week_start + timedelta(days=6)
+
+    this_week_start = today - timedelta(days=today.weekday())
+    this_week_end = today
+
+    # Query to count the number of sessions for last week and this week
+    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT COUNT(DISTINCT sessionID) AS sessions FROM tblconversations WHERE DATE(timestamp) BETWEEN %s AND %s",
+                   (last_week_start, last_week_end))
+    last_week_data = cursor.fetchone()
+
+    cursor.execute("SELECT COUNT(DISTINCT sessionID) AS sessions FROM tblconversations WHERE DATE(timestamp) BETWEEN %s AND %s",
+                   (this_week_start, this_week_end))
+    this_week_data = cursor.fetchone()
+
+    cursor.close()
+
+    # Calculate the percentage change
+    last_week_sessions = last_week_data["sessions"]
+    this_week_sessions = this_week_data["sessions"]
+
+    percentage_change = ((this_week_sessions - last_week_sessions) / last_week_sessions) * 100
+
+    response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
+    return jsonify(response)
+
+
+@fetchData.route("/fetch-inmessages-change", methods=["GET"])
+def fetch_inmessages_change():
+    # Calculate date ranges for this week and last week
+    today = datetime.now().date()
+    last_week_start = today - timedelta(days=today.weekday() + 7)
+    last_week_end = last_week_start + timedelta(days=6)
+
+    this_week_start = today - timedelta(days=today.weekday())
+    this_week_end = today
+
+    # Query to count the number of incoming messages for last week and this week
+    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT COUNT(incomingMessage) AS inmessages FROM tblconversations WHERE DATE(timestamp) BETWEEN %s AND %s",
+                   (last_week_start, last_week_end))
+    last_week_data = cursor.fetchone()
+
+    cursor.execute("SELECT COUNT(incomingMessage) AS inmessages FROM tblconversations WHERE DATE(timestamp) BETWEEN %s AND %s",
+                   (this_week_start, this_week_end))
+    this_week_data = cursor.fetchone()
+
+    cursor.close()
+
+    # Calculate the percentage change
+    last_week_inmessages = last_week_data["inmessages"]
+    this_week_inmessages = this_week_data["inmessages"]
+
+    percentage_change = ((this_week_inmessages - last_week_inmessages) / last_week_inmessages) * 100
+
+    response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
+    return jsonify(response)
+
+
+@fetchData.route("/fetch-botresponse-change", methods=["GET"])
+def fetch_botresponse_change():
+    # Calculate date ranges for this week and last week
+    today = datetime.now().date()
+    last_week_start = today - timedelta(days=today.weekday() + 7)
+    last_week_end = last_week_start + timedelta(days=6)
+
+    this_week_start = today - timedelta(days=today.weekday())
+    this_week_end = today
+
+    # Query to count the number of bot responses for last week and this week
+    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT COUNT(botMessage) AS botresponses FROM tblconversations WHERE DATE(timestamp) BETWEEN %s AND %s",
+                   (last_week_start, last_week_end))
+    last_week_data = cursor.fetchone()
+
+    cursor.execute("SELECT COUNT(botMessage) AS botresponses FROM tblconversations WHERE DATE(timestamp) BETWEEN %s AND %s",
+                   (this_week_start, this_week_end))
+    this_week_data = cursor.fetchone()
+
+    cursor.close()
+
+    # Calculate the percentage change
+    last_week_botresponses = last_week_data["botresponses"]
+    this_week_botresponses = this_week_data["botresponses"]
+
+    percentage_change = ((this_week_botresponses - last_week_botresponses) / last_week_botresponses) * 100
+
+    response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
+    return jsonify(response)
+
+
+@fetchData.route("/fetch-averageresponse-change", methods=["GET"])
+def fetch_averageresponse_change():
+    # Calculate date ranges for this week and last week
+    today = datetime.now().date()
+    last_week_start = today - timedelta(days=today.weekday() + 7)
+    last_week_end = last_week_start + timedelta(days=6)
+
+    this_week_start = today - timedelta(days=today.weekday())
+    this_week_end = today
+
+    # Query to calculate average response time for last week and this week
+    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT AVG(responseTime) AS averageresponse FROM tblconversations WHERE DATE(timestamp) BETWEEN %s AND %s",
+                   (last_week_start, last_week_end))
+    last_week_data = cursor.fetchone()
+
+    cursor.execute("SELECT AVG(responseTime) AS averageresponse FROM tblconversations WHERE DATE(timestamp) BETWEEN %s AND %s",
+                   (this_week_start, this_week_end))
+    this_week_data = cursor.fetchone()
+
+    cursor.close()
+
+    # Calculate the percentage change
+    last_week_averageresponse = last_week_data["averageresponse"]
+    this_week_averageresponse = this_week_data["averageresponse"]
+
+    percentage_change = ((this_week_averageresponse - last_week_averageresponse) / last_week_averageresponse) * 100
+
+    response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
+    return jsonify(response)
+
+
 #################### DASHBOARD DATA ##########################
 
 @fetchData.route('/performance-linechart-data', methods=['GET'])
@@ -29,7 +160,7 @@ def get_performance_linechart_data():
         today = datetime.now(ph_time)
         
         # Calculate the start and end dates for the current week (Monday to Sunday)
-        start_of_week = today - timedelta(days=(today.weekday() + 0) % 7)
+        start_of_week = today - timedelta(days=(today.weekday() + 1) % 7)
         end_of_week = start_of_week + timedelta(days=6)
 
         # Calculate the start and end dates for the previous week
@@ -130,7 +261,7 @@ def get_session_summary_data():
         today = datetime.now(ph_time)
 
         # Calculate the start and end dates for the current week (Monday to Sunday)
-        start_of_week = today - timedelta(days=(today.weekday() + 0) % 7)
+        start_of_week = today - timedelta(days=(today.weekday() + 1) % 7)
         end_of_week = start_of_week + timedelta(days=6)
 
         cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
@@ -283,8 +414,18 @@ def filter_engagement_data():
 def fetch_ratings():
     cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
 
-    # Query to count the number of satisfied and unsatisfied ratings
-    cursor.execute("SELECT rating, COUNT(DISTINCT sessionID) as rating_number FROM tblratings GROUP BY rating")
+    # Get the current month and year
+    current_month = datetime.now().strftime('%Y-%m')
+
+    # Query to count the number of satisfied and unsatisfied ratings for the current month
+    query = (
+        "SELECT rating, COUNT(DISTINCT sessionID) as rating_number "
+        "FROM tblratings "
+        f"WHERE DATE_FORMAT(timestamp, '%Y-%m') = '{current_month}' "
+        "GROUP BY rating"
+    )
+
+    cursor.execute(query)
     results = cursor.fetchall()
     cursor.close()
 
@@ -303,3 +444,94 @@ def fetch_ratings():
         "unsatisfied_percentage": unsatisfied_percentage
     }
     return jsonify(data)
+
+
+######################## FETCH USER SATISFACTION CHART DATA #####################
+
+@fetchData.route("/fetch-ratings-chart", methods=["GET"])
+def fetch_ratings_chart():
+    date_from = request.args.get("dateFrom")
+    date_to = request.args.get("dateTo")
+
+    if date_from is None or date_to is None:
+        # Handle the case where date_from or date_to is not provided
+        return jsonify({"error": "Invalid date range"})
+
+    # Convert date strings to datetime objects
+    date_from = datetime.strptime(date_from, "%Y-%m-%d")
+    date_to = datetime.strptime(date_to, "%Y-%m-%d")
+
+    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
+
+    # Generate a list of all dates within the range
+    all_dates = [date_from + timedelta(days=x) for x in range((date_to - date_from).days + 1)]
+
+    # Initialize dictionaries to store data for each date
+    data_by_date = {date.strftime('%Y-%m-%d'): {"Satisfied": 0, "Unsatisfied": 0} for date in all_dates}
+
+    # Query to count the number of satisfied and unsatisfied ratings for each date
+    cursor.execute("SELECT DATE(timestamp) as rating_date, rating, COUNT(DISTINCT sessionID) as rating_number FROM tblratings WHERE timestamp BETWEEN %s AND %s GROUP BY rating_date, rating",
+                   (date_from, date_to))
+    results = cursor.fetchall()
+    cursor.close()
+
+    # Update the dictionaries with the fetched data
+    for result in results:
+        rating_date = result["rating_date"].strftime('%Y-%m-%d')
+        rating_type = result["rating"]
+        data_by_date[rating_date][rating_type] = result["rating_number"]
+
+    # Convert the data to the required format
+    labels = list(data_by_date.keys())
+    satisfied_data = [data["Satisfied"] for data in data_by_date.values()]
+    unsatisfied_data = [data["Unsatisfied"] for data in data_by_date.values()]
+
+    data = {
+        "labels": labels,
+        "satisfied_data": satisfied_data,
+        "unsatisfied_data": unsatisfied_data
+    }
+
+    return jsonify(data)
+
+
+####################### FETCH CONVERSATION LENGTH ############################
+
+@fetchData.route("/filter-conversation-length", methods=["GET"])
+def filter_conversation_length():
+    date_from = request.args.get("date_from")
+    
+    # Convert the date string to a datetime object
+    selected_date = datetime.strptime(date_from, "%Y-%m-%d").date()
+
+    # Query to get the conversation length and ratings for the selected date
+    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("""
+        SELECT 
+            tc.sessionID,
+            MIN(tc.timestamp) AS first_conversation_time,
+            MAX(tc.timestamp) AS last_conversation_time,
+            TIMESTAMPDIFF(MINUTE, MIN(tc.timestamp), MAX(tc.timestamp)) AS conversation_length,
+            tr.rating
+        FROM tblconversations tc
+        LEFT JOIN tblratings tr ON tc.sessionID = tr.sessionID
+        WHERE DATE(tc.timestamp) = %s
+        GROUP BY tc.sessionID
+    """, (selected_date,))
+
+    result = cursor.fetchall()
+    cursor.close()
+
+    # Extract data for chart
+    sessionID = [row["sessionID"] for row in result]
+    conversationLength = [row["conversation_length"] for row in result]
+    ratings = [row["rating"] for row in result]
+
+    # Prepare the response
+    response = {
+        "sessionID": sessionID,
+        "conversationLength": conversationLength,
+        "ratings": ratings
+    }
+
+    return jsonify(response)

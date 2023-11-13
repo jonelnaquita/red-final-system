@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+
+<html>
+<body>
+{% block content%}
+<head>
+  <link rel="stylesheet" href="/static/css/custom/chat.css" >
+</head>
+    <div class="main-panel">
+        <div class="content-wrapper">
+            <div class="row">
+              <div class="col-12 col-lg-4 col-lg-12 grid-margin stretch-card">
+                <div class="card card-rounded">
+                  <div class="card-body">
+                    <div class="d-sm-flex justify-content-between align-items-start">
+                      <div>
+                       <h4 class="card-title card-title-dash">Conversation Length</h4>
+                       <h5 class="card-subtitle card-subtitle-dash">This line chart provides the user engagement data on the chatbot based on its date range.</h5>
+                      </div>
+                      <div>
+                        <div class="dropdown">
+                          <button class="btn btn-light dropdown-toggle toggle-dark btn-sm mb-0 me-0" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="icon-download"></i> Export </button>
+                          <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
+                            <a class="dropdown-item" href="#">PDF</a>
+                            <a class="dropdown-item" href="#">CSV</a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="d-sm-flex align-items-center mt-1 justify-content-between">
+                      <div></div>
+                      <div id="performance-line-legend"><div class="chartjs-legend"><ul><li><span style="background-color:#1F3BB3"></span></li><li><span style="background-color:#52CDFF"></span></li></ul></div></div>
+                    </div>
+                    <div class="row">
+                      <div class="col-lg-4">
+                        <div class="input-group date-default d-flex align-items-center">
+                          <input type="text" class="form-control date-from" id="date">
+                          <span class="input-group-addon input-group-append border-left">
+                            <span class="ti-calendar input-group-text"></span>
+                          </span>
+                          <button type="button" class="btn btn-success btn-sm" id="filter-btn">Filter</button>
+                        </div>                 
+                      </div>
+                    </div>
+                    <div class="chartjs-wrapper mt-4"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
+                      <canvas id="performaneLine" style="display: block; width: 775px; height: 150px;" width="775" height="150" class="chartjs-render-monitor"></canvas> 
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-lg-4 col-lg-12 grid-margin stretch-card">
+                <div class="card card-rounded">
+                  <div class="card-body">
+                    <div class="messaging">
+                      <div class="inbox_msg">
+                          <div class="inbox_people">
+                              <div class="inbox_chat">
+                                  {% for session in sessions %}
+                                      <div class="chat_list tab-pane" data-session-id="{{ session.sessionID }}">
+                                          <div class="chat_people">
+                                              <div class="chat_ib">
+                                                  <input type="hidden" value="{{ session.sessionID }}">
+                                                  <h5>{{ session.incomingMessage if session.incomingMessage else session.botMessage }}</h5>
+                                                  <p><span class="chat_date">{{ session.timestamp }}</span></p>
+                                              </div>
+                                          </div>
+                                      </div>
+                                  {% endfor %}
+                              </div>
+                          </div>
+                          <div class="mesgs" style="">
+                              <div class="msg_history">
+                              </div>
+                          </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+</body>
+
+{% block scripts %}
+
+<script>
+  $(document).ready(function () {
+    filterConversationLength();
+  
+    $("#filter-btn").on("click", function () {
+      filterConversationLength();
+    });
+
+    function filterConversationLength() {
+      var dateFrom = $("#date").val();
+
+      $.ajax({
+          type: "GET",
+          url: "/filter-conversation-length",
+          data: { date_from: dateFrom },
+          success: function (response) {
+              updateConversationLength(response.sessionID, response.conversationLength, response.ratings);
+          },
+          error: function (error) {
+              console.error("Error fetching user engagement data:", error);
+          }
+      });
+    }
+
+      // Function to update the session count
+    function updateConversationLength(sessionID, conversationLength, ratings) {
+
+      if ($("#performaneLine").length) {
+        var graphGradient = document.getElementById("performaneLine").getContext('2d');
+        var graphGradient2 = document.getElementById("performaneLine").getContext('2d');
+        var saleGradientBg = graphGradient.createLinearGradient(5, 0, 5, 100);
+        saleGradientBg.addColorStop(0, 'rgba(26, 115, 232, 0.18)');
+        saleGradientBg.addColorStop(1, 'rgba(26, 115, 232, 0.02)');
+        var saleGradientBg2 = graphGradient2.createLinearGradient(100, 0, 50, 150);
+        saleGradientBg2.addColorStop(0, 'rgba(0, 208, 255, 0.19)');
+        saleGradientBg2.addColorStop(1, 'rgba(0, 208, 255, 0.03)');
+        var salesTopData = {
+            labels: sessionID,
+            datasets: [{
+                label: "Time Length (Minutes)",
+                data: conversationLength,
+                new: ratings,
+                backgroundColor: saleGradientBg,
+                borderColor: [
+                    '#1F3BB3',
+                ],
+                borderWidth: 1.5,
+                fill: true, // 3: no fill
+                pointBorderWidth: 1,
+                pointRadius: [4, 4, 4, 4, 4,4, 4, 4, 4, 4,4, 4, 4],
+                pointHoverRadius: [2, 2, 2, 2, 2,2, 2, 2, 2, 2,2, 2, 2],
+                pointBackgroundColor: ['#1F3BB3)', '#1F3BB3', '#1F3BB3', '#1F3BB3','#1F3BB3)', '#1F3BB3', '#1F3BB3', '#1F3BB3','#1F3BB3)', '#1F3BB3', '#1F3BB3', '#1F3BB3','#1F3BB3)'],
+                pointBorderColor: ['#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff','#fff',],
+            }]
+        };
+    
+        var salesTopOptions = {
+          responsive: true,
+          maintainAspectRatio: false,
+            scales: {
+                yAxes: [{
+                    gridLines: {
+                        display: true,
+                        drawBorder: false,
+                        color:"#F0F0F0",
+                        zeroLineColor: '#F0F0F0',
+                    },
+                    ticks: {
+                      beginAtZero: false,
+                      autoSkip: true,
+                      maxTicksLimit: 4,
+                      fontSize: 10,
+                      color:"#6B778C"
+                    }
+                }],
+                xAxes: [{
+                  gridLines: {
+                      display: false,
+                      drawBorder: false,
+                  },
+                  ticks: {
+                    beginAtZero: false,
+                    autoSkip: true,
+                    maxTicksLimit: 7,
+                    fontSize: 10,
+                    color:"#6B778C"
+                  }
+              }],
+            },
+            legend:false,
+            legendCallback: function (chart) {
+              var text = [];
+              text.push('<div class="chartjs-legend"><ul>');
+              for (var i = 0; i < chart.data.datasets.length; i++) {
+                console.log(chart.data.datasets[i]); // see what's inside the obj.
+                text.push('<li>');
+                text.push('<span style="background-color:' + chart.data.datasets[i].borderColor + '">' + '</span>');
+                text.push(chart.data.datasets[i].label);
+                text.push('</li>');
+              }
+              text.push('</ul></div>');
+              return text.join("");
+            },
+            
+            elements: {
+                line: {
+                    tension: 0.4,
+                }
+            },
+            tooltips: {
+                backgroundColor: 'rgba(31, 59, 179, 1)',
+            }
+        }
+        var salesTop = new Chart(graphGradient, {
+            type: 'line',
+            data: salesTopData,
+            options: salesTopOptions
+        });
+        document.getElementById('performance-line-legend').innerHTML = salesTop.generateLegend();
+      }
+    }
+
+  });
+</script>
+
+<script>
+  //Function to load conversation when a chat list was clicked
+  document.querySelectorAll('.chat_list').forEach(function(chatList) {
+      chatList.addEventListener('click', function() {
+          var sessionId = chatList.getAttribute('data-session-id');
+  
+          fetch('/conversation-length/' + sessionId)
+              .then(function(response) {
+                  if (!response.ok) {
+                      throw new Error('Network response was not ok');
+                  }
+                  return response.json();
+              })
+              .then(function(conversation) {
+                  var mesgs = document.querySelector('.mesgs .msg_history');
+                  mesgs.innerHTML = '';
+  
+                  conversation.forEach(function(message) {
+                      var messageHtml = `
+                          <div class="incoming_msg">
+                              <div class="received_msg">
+                                  <div class="received_withd_msg">
+                                      <p>${message.incomingMessage}</p>
+                                      <span class="time_date">${message.timestamp}</span>
+                                  </div>
+                              </div>
+                          </div>
+                          <div class="outgoing_msg">
+                              <div class="incoming_msg_img float-right">
+                                  <img src="/static/assets/images/RED_Logo.png" alt="red-logo">
+                              </div>
+                              <div class="sent_msg">
+                                  <p>${message.botMessage}</p>
+                                  <span class="time_date">${message.timestamp}</span>
+                              </div>
+                          </div>
+                      `;
+                      mesgs.innerHTML += messageHtml;
+                  });
+              })
+              .catch(function(error) {
+                  console.error(error);
+              });
+      });
+  });
+</script>
+
+<script>
+  // Function to load the most recent conversation for the first chat session when the page loads
+  function loadMostRecentConversation() {
+      // Check if there is at least one chat session
+      var chatLists = document.querySelectorAll('.chat_list');
+      if (chatLists.length > 0) {
+          var firstChatList = chatLists[0];
+          var sessionId = firstChatList.getAttribute('data-session-id');
+
+          // Add 'active_chat' class to the first chat_list element
+          firstChatList.classList.add('active_chat');
+
+          fetch('/conversation-length/' + sessionId)
+              .then(function(response) {
+                  if (!response.ok) {
+                      throw new Error('Network response was not ok');
+                  }
+                  return response.json();
+              })
+              .then(function(conversation) {
+                  var mesgs = document.querySelector('.mesgs .msg_history');
+                  mesgs.innerHTML = '';
+
+                  conversation.forEach(function(message) {
+                      var messageHtml = `
+                          <div class="incoming_msg">
+                              <div class="received_msg">
+                                  <div class="received_withd_msg">
+                                      <p>${message.incomingMessage}</p>
+                                      <span class="time_date">${message.timestamp}</span>
+                                  </div>
+                              </div>
+                          </div>
+                          <div class="outgoing_msg">
+                              <div class="incoming_msg_img float-right">
+                                  <img src="/static/assets/images/RED_Logo.png" alt="red-logo">
+                              </div>
+                              <div class="sent_msg">
+                                  <p>${message.botMessage}</p>
+                                  <span class="time_date">${message.timestamp}</span>
+                              </div>
+                          </div>
+                      `;
+                      mesgs.innerHTML += messageHtml;
+                  });
+              })
+              .catch(function(error) {
+                  console.error(error);
+              });
+      }
+  }
+
+  // Call the function to load the most recent conversation when the page loads
+  window.addEventListener('load', loadMostRecentConversation);
+</script>
+
+<script>
+  document.querySelectorAll('.chat_list').forEach(function(chatList) {
+      chatList.addEventListener('click', function() {
+          document.querySelectorAll('.chat_list').forEach(function(element) {
+              element.classList.remove('active_chat');
+          });
+          chatList.classList.add('active_chat');
+      });
+      chatList.addEventListener('mouseover', function() {
+          chatList.style.cursor = 'pointer';
+      });
+      chatList.addEventListener('mouseout', function() {
+          chatList.style.cursor = 'default';
+      });
+  });
+</script>
+
+{% endblock %}
+
+</html>

@@ -51,6 +51,24 @@
     // Set the maxDate for both date inputs to the current date
     $('#date-from, #date-to').datepicker('setEndDate', currentDate);
   }
+
+  if ($('.date-default').length) {
+    // Initialize the datepicker for the date input
+    $('#date').datepicker({
+      format: 'yyyy-mm-dd',
+      todayHighlight: true,
+      autoclose: true
+    });
+  
+    // Get the current date
+    var currentDate = new Date();
+  
+    // Set the initial date value for date-from
+    $('#date').datepicker('setDate', currentDate);
+  
+    // Set the maxDate for date-from to the current date
+    $('#date').datepicker('setEndDate', currentDate);
+  }
   
   
 })(jQuery);

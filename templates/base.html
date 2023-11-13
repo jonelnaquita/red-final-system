@@ -59,7 +59,7 @@
 			<div class="navbar-menu-wrapper d-flex align-items-top"> 
 			  <ul class="navbar-nav">
 				<li class="nav-item font-weight-semibold d-none d-lg-block ms-0">
-				  <h1 class="welcome-text">Good Morning, <span class="text-black fw-bold">RED</span></h1>
+				  <h1 class="welcome-text"><span class="text-black fw-bold" id="username"></span></h1>
 				</li>
 			  </ul>
 			  <ul class="navbar-nav ms-auto">
@@ -90,7 +90,7 @@
 						  <ul class="nav flex-column sub-menu">
 							<li class="nav-item"> <a class="nav-link" href="/user-engagement">User Engagement</a></li>
 							<li class="nav-item"> <a class="nav-link" href="/user-satisfaction">User Satisfaction</a></li>
-							<li class="nav-item"> <a class="nav-link" href="pages/ui-features/typography.html">Response Time Analysis</a></li>
+							<li class="nav-item"> <a class="nav-link" href="/conversation-length">Conversation Length</a></li>
 						  </ul>
 						</div>
 					</li>
@@ -231,8 +231,39 @@
 
 	<script src="https://cdn.ckeditor.com/ckeditor5/39.0.0/classic/ckeditor.js"></script>
 
+	<script>
+        // Function to update the welcome text
+        function updateWelcomeText() {
+            // Get the current hour
+            var currentHour = new Date().getHours();
+            var username = "RED";
 
+            var welcomeTextElement = $('.welcome-text');
+			var welcomeName = $('.welcome-text span');
 
+			if (currentHour >= 4 && currentHour < 12) {
+                // Morning
+                welcomeTextElement.text('Good Morning, ').append(welcomeName.text('#username'));
+            } else if (currentHour >= 12 && currentHour < 18) {
+                // Afternoon
+                welcomeTextElement.text('Good Afternoon, ').append(welcomeName.text('#username'));
+            } else {
+                // Evening
+                welcomeTextElement.text('Good Evening, ').append(welcomeName.text('#username'));
+            }
+
+            // Update the username
+            $('#username').text(username);
+        }
+
+        // Call the function on document ready
+        $(document).ready(function () {
+            updateWelcomeText();
+        });
+    </script>
+
+	<script src="static/js/data-fetch/dashboard.js"></script>
+	
     {% block scripts %}
     {% endblock %}
 </body>

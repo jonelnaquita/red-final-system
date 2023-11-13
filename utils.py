@@ -19,31 +19,13 @@ utils = Blueprint("utils",
                 )
 
 mysql = MySQLdb.connect(
-        host="mysql-152093-0.cloudclusters.net",
-        user="admin",
-        port=19876,
-        password="hXtRVj9v",
-        db="redchatbot"
+        host="bteoc1hjrvxi0jsf8u2d-mysql.services.clever-cloud.com",
+        user="u4ii1cazgwjra6qw",
+        port=3306,
+        password="M8iNilfIRKii1a2n4tL5",
+        db="bteoc1hjrvxi0jsf8u2d"
     )
 
-
-@utils.route('/instructions')
-def instructions():
-    if 'login' not in session or not session['login']:
-        # If 'login' session variable is not set or is False, redirect to login page
-        return redirect(url_for('login'))
-    
-    try:
-        # Read and parse the XML file
-        tree = ElementTree(file='xml/instructions.xml')
-        root = tree.getroot()
-
-        # Extract data from the XML, including item text and ID
-        items = [{'id': element.get('id'), 'text': element.text} for element in root.findall('.//item')]
-    except Exception as e:
-        items = []
-
-    return render_template('instructions.html', items=items)
 
 @utils.route('/get-instructions', methods=['GET'])
 def get_instructions():

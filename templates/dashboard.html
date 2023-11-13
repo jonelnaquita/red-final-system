@@ -24,27 +24,27 @@
                                         <div>
                                           <p class="statistics-title">Sessions</p>
                                           <h3 class="rate-percentage" id="session-count"></h3>
-                                          <p class="text-danger d-flex"><i class="mdi mdi-menu-down"></i><span>68.8</span></p>
+                                          <p class="text-danger d-flex"><i class="mdi mdi-menu-up"></i><span id="session-percentage-change">Loading...</span></p>
                                         </div>
                                         <div>
                                           <p class="statistics-title">Bot Responses</p>
                                           <h3 class="rate-percentage" id="bot-response-count"></h3>
-                                          <p class="text-success d-flex"><i class="mdi mdi-menu-down"></i><span>+0.8%</span></p>
+                                          <p class="text-danger d-flex"><i class="mdi"></i><span id="botresponse-percentage-change">Loading...</span></p>
                                         </div>
                                         <div>
                                           <p class="statistics-title">In Messages</p>
                                           <h3 class="rate-percentage" id="in-message-count"></h3>
-                                          <p class="text-danger d-flex"><i class="mdi mdi-menu-down"></i><span>68.8</span></p>
+                                          <p class="text-danger d-flex"><i class="mdi"></i><span id="inmessages-percentage-change">Loading...</span></p>
                                         </div>
                                         <div>
                                           <p class="statistics-title">Average Response Time</p>
                                           <h3 class="rate-percentage" id="avg-response-time"></h3>
-                                          <p class="text-success d-flex"><i class="mdi mdi-menu-up"></i><span>+0.1%</span></p>
+                                          <p class="text-danger d-flex"><i class="mdi"></i><span id="averageresponse-percentage-change">Loading...</span></p>
                                         </div>
                                         <div>
                                           <p class="statistics-title">Site Visitors</p>
                                           <h3 class="rate-percentage" id="count-visitors"></h3>
-                                          <p class="text-success d-flex"><i class="mdi mdi-menu-down"></i><span>+0.8%</span></p>
+                                          <p class="text-danger d-flex"><i class="mdi"></i><span id="sitevisitors-percentage-change">Loading...</span></p>
                                         </div>
                                     </div>
                                 </div>
@@ -139,7 +139,7 @@
                                                       </div>
                                                   </div>
                                                   <div>
-                                                      <p class="text-small mb-2">Visits per day</p>
+                                                      <p class="text-small mb-2">Visits Today</p>
                                                       <h4 class="mb-0 fw-bold">{{ today_visitors }}</h4> <!-- Display daily visitors count -->
                                                   </div>
                                               </div>
@@ -219,6 +219,42 @@
 </body>
 
 {% block scripts %}
+<script>
+  // Fetch data from your Flask route
+  $(document).ready(function () {
+    fetchPercentageChange("#session-percentage-change", "/fetch-session-change");
+    fetchPercentageChange("#inmessages-percentage-change", "/fetch-inmessages-change");
+    fetchPercentageChange("#botresponse-percentage-change", "/fetch-botresponse-change");
+    fetchPercentageChange("#averageresponse-percentage-change", "/fetch-averageresponse-change");
+
+    function fetchPercentageChange(elementId, route) {
+      $.ajax({
+        type: "GET",
+        url: route,
+        success: function (data) {
+          // Update the content of the span element with the fetched percentage change and sign
+          var percentageChange = data.percentage_change;
+          var sign = percentageChange > 0 ? '+' : '';
+          $(elementId).text(sign + percentageChange + "%");
+
+          // Check the condition and update the icon accordingly
+          var iconElement = $(elementId).prev().find(".mdi");
+          if (percentageChange > 0) {
+            iconElement.removeClass("mdi-menu-down").addClass("mdi-menu-up");
+          } else {
+            iconElement.removeClass("mdi-menu-up").addClass("mdi-menu-down");
+          }
+        },
+        error: function (error) {
+          console.error("Error fetching data:", error);
+          $(elementId).text("N/A");
+        }
+      });
+    }
+  });
+</script>
+
+
 
 <script>
   $(document).ready(function() {
@@ -235,6 +271,9 @@
   }
 
   function updateSessionSummary(data){
+    console.log("Session Days:", data.current_week_data.map(row => row.day));
+    console.log("Session Counts:", data.current_week_data.map(row => row.session_count));
+    
     $('#total-session').text(data.total_sessions);
     var statusSummaryChartCanvas = document.getElementById("status-summary").getContext('2d');
     
@@ -326,7 +365,7 @@
   $('#session-count').text(sessionCount);
   $('#in-message-count').text(inMessageCount);
   $('#bot-response-count').text(botResponseCount);
-  $('#avg-response-time').text(avgResponseTime);
+  $('#avg-response-time').text(avgResponseTime).append(" seconds");
   $('#count-visitors').text(countVisitors);
 </script>
 
@@ -474,7 +513,7 @@
     var marketingOverviewData = {
         labels: data.months,
         datasets: [{
-          label: 'Month',
+          label: 'Total Users',
           data: data.session_counts,
           backgroundColor: "#CE1E2D",
           borderColor: [

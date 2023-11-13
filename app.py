@@ -52,12 +52,12 @@ app = Flask(__name__,
 
 app.secret_key = 'xyzsdfg'
 
-app.config['MYSQL_HOST'] = "mysql-152093-0.cloudclusters.net"
-app.config['MYSQL_USER'] = "admin"
-app.config['MYSQL_PORT'] = 19876
-app.config['MYSQL_PASSWORD'] = "hXtRVj9v"
-app.config['MYSQL_DB'] = "redchatbot"
-#app.config['MYSQL_DATABASE_URI'] = 'mysql://admin:redchatbot@mysql-152093-0.cloudclusters.net:19876/redcms?init_command=SET time_zone=+08:00'
+app.config['MYSQL_HOST'] = "bteoc1hjrvxi0jsf8u2d-mysql.services.clever-cloud.com"
+app.config['MYSQL_USER'] = "u4ii1cazgwjra6qw"
+app.config['MYSQL_PORT'] = 3306
+app.config['MYSQL_PASSWORD'] = "M8iNilfIRKii1a2n4tL5"
+app.config['MYSQL_DB'] = "bteoc1hjrvxi0jsf8u2d"
+#app.config['MYSQL_DATABASE_URI'] = 'mysql://admin:hXtRVj9v@mysql-152093-0.cloudclusters.net:19876/redchatbot?init_command=SET time_zone=+08:00'
 
 #Register Views
 app.register_blueprint(views)
@@ -71,7 +71,7 @@ load_dotenv()
 PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
 PINECONE_ENV = os.getenv('PINECONE_ENV')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-INDEX_NAME = "red-chatbot-final"
+INDEX_NAME = os.getenv('INDEX_NAME')
 EMBEDDING_MODEL ="text-embedding-ada-002"
 
 # Initialize Pinecone
