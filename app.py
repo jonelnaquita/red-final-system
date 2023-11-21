@@ -57,10 +57,11 @@ app = Flask(__name__,
 
 app.secret_key = 'xyzsdfg'
 
-app.config['MYSQL_HOST'] = "localhost"
-app.config['MYSQL_USER'] = "root"
-app.config['MYSQL_PASSWORD'] = ""
-app.config['MYSQL_DB'] = "redcms"
+app.config['MYSQL_HOST'] = 'mysql-152093-0.cloudclusters.net'
+app.config['MYSQL_PORT'] = 19876
+app.config['MYSQL_USER'] = 'admin'
+app.config['MYSQL_PASSWORD'] = "hXtRVj9v"
+app.config['MYSQL_DB'] = 'redcms'
 app.config['MYSQL_AUTOCOMMIT'] = True
 
 mysql = MySQL(app)
@@ -211,6 +212,7 @@ def dashboard():
         
     except Exception as e:
         return jsonify({"error": str(e)})
+    
 
 @app.route('/manage')
 def managedatasource():

@@ -18,10 +18,11 @@ utils = Blueprint("utils",
                 static_url_path="/static"
                 )
 
-mysql = mysql = MySQLdb.connect(
-        host="localhost",
-        user="root",
-        password="",
+mysql = MySQLdb.connect(
+        host="mysql-152093-0.cloudclusters.net",
+        user="admin",
+        port=19876,
+        password="hXtRVj9v",
         db="redcms"
     )
 
