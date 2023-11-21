@@ -57,11 +57,11 @@ app = Flask(__name__,
 
 app.secret_key = 'xyzsdfg'
 
-app.config['MYSQL_HOST'] = 'mysql-152093-0.cloudclusters.net'
-app.config['MYSQL_PORT'] = 19876
-app.config['MYSQL_USER'] = 'admin'
-app.config['MYSQL_PASSWORD'] = "hXtRVj9v"
-app.config['MYSQL_DB'] = 'redcms'
+app.config['MYSQL_HOST'] = "bteoc1hjrvxi0jsf8u2d-mysql.services.clever-cloud.com"
+app.config['MYSQL_USER'] = "u4ii1cazgwjra6qw"
+app.config['MYSQL_PORT'] = 3306
+app.config['MYSQL_PASSWORD'] = "M8iNilfIRKii1a2n4tL5"
+app.config['MYSQL_DB'] = "bteoc1hjrvxi0jsf8u2d"
 app.config['MYSQL_AUTOCOMMIT'] = True
 
 mysql = MySQL(app)
