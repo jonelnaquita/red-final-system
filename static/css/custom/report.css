@@ -1,0 +1,16 @@
+/* Apply the Manrope font to the body */
+body {
+    font-family: 'Manrope', sans-serif;
+}
+
+/* Optionally, you can customize the font styles for specific elements */
+h1, h2, th, td {
+    font-family: 'Manrope', sans-serif;
+}
+
+/* Add custom styles for the logo */
+.header-logo {
+    max-width: 100px; /* Adjust the max-width as needed */
+    float: right;
+    margin-top: -30px; /* Adjust the margin-top as needed */
+}

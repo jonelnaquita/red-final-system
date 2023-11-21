@@ -4,7 +4,8 @@
 <body>
 {% block content%}
 <head>
-  <link rel="stylesheet" href="/static/css/custom/chat.css" >
+  <link rel="stylesheet" href="/static/css/custom/conversation.css" >
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
 </head>
     <div class="main-panel">
         <div class="content-wrapper">
@@ -15,9 +16,9 @@
                     <div class="d-sm-flex justify-content-between align-items-start">
                       <div>
                        <h4 class="card-title card-title-dash">Conversation Length</h4>
-                       <h5 class="card-subtitle card-subtitle-dash">This line chart provides the user engagement data on the chatbot based on its date range.</h5>
+                       <h5 class="card-subtitle card-subtitle-dash">This line chart provides the user conversation length data on the chatbot based on its date range.</h5>
                       </div>
-                      <div>
+                      <!--<div>
                         <div class="dropdown">
                           <button class="btn btn-light dropdown-toggle toggle-dark btn-sm mb-0 me-0" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="icon-download"></i> Export </button>
                           <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
@@ -25,7 +26,7 @@
                             <a class="dropdown-item" href="#">CSV</a>
                           </div>
                         </div>
-                      </div>
+                      </div>-->
                     </div>
                     <div class="d-sm-flex align-items-center mt-1 justify-content-between">
                       <div></div>
@@ -50,33 +51,45 @@
               </div>
               <div class="col-12 col-lg-4 col-lg-12 grid-margin stretch-card">
                 <div class="card card-rounded">
-                  <div class="card-body">
-                    <div class="messaging">
-                      <div class="inbox_msg">
-                          <div class="inbox_people">
-                              <div class="inbox_chat">
-                                  {% for session in sessions %}
-                                      <div class="chat_list tab-pane" data-session-id="{{ session.sessionID }}">
-                                          <div class="chat_people">
-                                              <div class="chat_ib">
-                                                  <input type="hidden" value="{{ session.sessionID }}">
-                                                  <h5>{{ session.incomingMessage if session.incomingMessage else session.botMessage }}</h5>
-                                                  <p><span class="chat_date">{{ session.timestamp }}</span></p>
+                    <div class="card-body">
+                      <div>
+                        <h4 class="card-title card-title-dash">Messages</h4>
+                       </div>
+                        <div class="bootstrap snippets bootdey">
+                            <div class="tile tile-alt" id="messages-main" style="overflow-y: auto;">
+                                
+                                <!-- Sidebar -->
+                                <div class="container-fluid" id="sidebar-container">
+                                  <div class="row">
+                                      <div class="col-lg-4 col-md-6 col-sm-12">
+                                          <div class="ms-menu" style="max-height: 500px; overflow-y: auto;" >
+                                              <div class="list-group lg-alt">
+                                                  <!--Users List-->
+                                                  <span class="break-line"></span>
                                               </div>
                                           </div>
                                       </div>
-                                  {% endfor %}
-                              </div>
-                          </div>
-                          <div class="mesgs" style="">
-                              <div class="msg_history">
-                              </div>
-                          </div>
-                      </div>
+                                  </div>
+                                </div>
+
+                                <!-- Main Message Body -->
+                                <div class="ms-body" style="height: 500px; overflow-y: auto;">
+                                  <div class="action-header clearfix">
+                                      <div class="visible-xs" id="ms-menu-trigger">
+                                          <i class="fa fa-bars"></i>
+                                      </div>
+                                  </div>
+                                  <div class="ms-body-feed">
+                                  </div>
+                                </div>
+            
+                            </div>
+                        </div>
                     </div>
-                  </div>
                 </div>
-              </div>
+            </div>
+            
+              
             </div>
         </div>
     </div>
@@ -210,125 +223,134 @@
   });
 </script>
 
-<script>
-  //Function to load conversation when a chat list was clicked
-  document.querySelectorAll('.chat_list').forEach(function(chatList) {
-      chatList.addEventListener('click', function() {
-          var sessionId = chatList.getAttribute('data-session-id');
-  
-          fetch('/conversation-length/' + sessionId)
-              .then(function(response) {
-                  if (!response.ok) {
-                      throw new Error('Network response was not ok');
-                  }
-                  return response.json();
-              })
-              .then(function(conversation) {
-                  var mesgs = document.querySelector('.mesgs .msg_history');
-                  mesgs.innerHTML = '';
-  
-                  conversation.forEach(function(message) {
-                      var messageHtml = `
-                          <div class="incoming_msg">
-                              <div class="received_msg">
-                                  <div class="received_withd_msg">
-                                      <p>${message.incomingMessage}</p>
-                                      <span class="time_date">${message.timestamp}</span>
-                                  </div>
-                              </div>
-                          </div>
-                          <div class="outgoing_msg">
-                              <div class="incoming_msg_img float-right">
-                                  <img src="/static/assets/images/RED_Logo.png" alt="red-logo">
-                              </div>
-                              <div class="sent_msg">
-                                  <p>${message.botMessage}</p>
-                                  <span class="time_date">${message.timestamp}</span>
-                              </div>
-                          </div>
-                      `;
-                      mesgs.innerHTML += messageHtml;
-                  });
-              })
-              .catch(function(error) {
-                  console.error(error);
-              });
-      });
-  });
+<script type="text/javascript">
+	$(function(){
+   if ($('#ms-menu-trigger')[0]) {
+        $('body').on('click', '#ms-menu-trigger', function() {
+            $('.ms-menu').toggleClass('toggled'); 
+        });
+    }
+});
 </script>
 
+
 <script>
-  // Function to load the most recent conversation for the first chat session when the page loads
-  function loadMostRecentConversation() {
-      // Check if there is at least one chat session
-      var chatLists = document.querySelectorAll('.chat_list');
-      if (chatLists.length > 0) {
-          var firstChatList = chatLists[0];
-          var sessionId = firstChatList.getAttribute('data-session-id');
+  $(document).ready(function () {
+    fetchAndDisplayUsers();
 
-          // Add 'active_chat' class to the first chat_list element
-          firstChatList.classList.add('active_chat');
+    $("#filter-btn").on("click", function () {
+      fetchAndDisplayUsers();
+    });
 
-          fetch('/conversation-length/' + sessionId)
-              .then(function(response) {
-                  if (!response.ok) {
-                      throw new Error('Network response was not ok');
-                  }
-                  return response.json();
-              })
-              .then(function(conversation) {
-                  var mesgs = document.querySelector('.mesgs .msg_history');
-                  mesgs.innerHTML = '';
+    // Function to fetch and display users
+    function fetchAndDisplayUsers() {
+      var dateFrom = $("#date").val();
 
-                  conversation.forEach(function(message) {
-                      var messageHtml = `
-                          <div class="incoming_msg">
-                              <div class="received_msg">
-                                  <div class="received_withd_msg">
-                                      <p>${message.incomingMessage}</p>
-                                      <span class="time_date">${message.timestamp}</span>
-                                  </div>
-                              </div>
-                          </div>
-                          <div class="outgoing_msg">
-                              <div class="incoming_msg_img float-right">
-                                  <img src="/static/assets/images/RED_Logo.png" alt="red-logo">
-                              </div>
-                              <div class="sent_msg">
-                                  <p>${message.botMessage}</p>
-                                  <span class="time_date">${message.timestamp}</span>
-                              </div>
-                          </div>
-                      `;
-                      mesgs.innerHTML += messageHtml;
-                  });
-              })
-              .catch(function(error) {
-                  console.error(error);
-              });
+      $.ajax({
+        type: "GET",
+        url: "/fetch-users-data",
+        data: { date_from: dateFrom },
+        success: function (response) {
+          // Clear existing content
+          $(".list-group").empty();
+
+          if (response.length === 0) {
+            // Display a message when there's no available conversation
+            $(".ms-body").html('<p>No available conversation.</p>');
+            return;
+          }
+
+          // Loop through the fetched data and append to the list
+          response.forEach(function (user) {
+            var listItem = `
+              <a class="list-group-item media" href data-session-id="${user.session_id}">
+                <div class="media-body">
+                  <p class="list-group-item-text c-gray session-id">${user.session_id}</p>
+                  <div class="row">
+                    <div class="col-auto">
+                      <span class="badge badge-primary" id="ratings">${user.ratings}</span>
+                    </div>
+                    <div class="col-auto">
+                      <span class="badge badge-primary" id="conversation-length">${user.conversation_length} Mins.</span>
+                    </div>
+                  </div>
+                </div>
+              </a>
+              <span class="break-line"></span>`;
+
+            $(".list-group").append(listItem);
+          });
+
+          // Trigger click on the first item to load the conversation
+          var firstItem = $(".list-group-item:first");
+          firstItem.click();
+        },
+        error: function (error) {
+          console.error("Error fetching user data:", error);
+        }
+      });
+    }
+  });
+
+  // Function to fetch and display conversation based on sessionID
+  function fetchConversation(sessionID) {
+    // Make an AJAX request to fetch conversation data
+    $.ajax({
+      type: "GET",
+      url: "/fetch-conversation?sessionID=" + sessionID,
+      success: function (conversation) {
+        var mesgs = document.querySelector(".ms-body-feed");
+        mesgs.innerHTML = "";
+
+        if (conversation.length === 0) {
+          // Display a message when there's no available conversation
+          mesgs.innerHTML = '<p>No available conversation.</p>';
+          return;
+        }
+
+        conversation.forEach(function (message) {
+          var messageBody = `
+            <div class="message-feed media">
+                <div class="media-body">
+                    <div class="mf-content" id="user-messages">
+                        ${message.incomingMessage}
+                    </div>
+                    <small class="mf-date" id="message-date-time"><i class="fa fa-clock-o"></i> ${message.timestamp}</small>
+                </div>
+            </div>
+            <div class="message-feed right">
+                <div class="media-body">
+                    <div class="mf-content" id="bot-messages">
+                        ${message.botMessage}
+                    </div>
+                    <small class="mf-date" id="message-date-time"><i class="fa fa-clock-o"></i> ${message.timestamp}</small>
+                </div>
+            </div>
+            `;
+          mesgs.innerHTML += messageBody;
+        });
+
+        // Unhighlight other items and highlight the clicked one
+        $(".list-group-item").addClass("bg-light");
+        $(`[data-session-id="${sessionID}"]`).removeClass("bg-light");
+
+      },
+      error: function (error) {
+        console.error("Error fetching conversation:", error);
       }
+    });
   }
 
-  // Call the function to load the most recent conversation when the page loads
-  window.addEventListener('load', loadMostRecentConversation);
-</script>
+  // Click event for the sidebar items
+  $("#sidebar-container").on("click", ".list-group-item", function (e) {
+    e.preventDefault();
+    var sessionID = $(this).data("session-id");
 
-<script>
-  document.querySelectorAll('.chat_list').forEach(function(chatList) {
-      chatList.addEventListener('click', function() {
-          document.querySelectorAll('.chat_list').forEach(function(element) {
-              element.classList.remove('active_chat');
-          });
-          chatList.classList.add('active_chat');
-      });
-      chatList.addEventListener('mouseover', function() {
-          chatList.style.cursor = 'pointer';
-      });
-      chatList.addEventListener('mouseout', function() {
-          chatList.style.cursor = 'default';
-      });
+    fetchConversation(sessionID);
   });
 </script>
+
+
 
 {% endblock %}
 

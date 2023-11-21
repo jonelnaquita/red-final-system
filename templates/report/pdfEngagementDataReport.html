@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Custom Report</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    
+        <!-- Add link to Manrope font from Google Fonts -->
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap">
+        
+        <style>
+            /* Apply the Manrope font to the body */
+            body {
+                font-family: 'Manrope', sans-serif;
+            }
+    
+            /* Optionally, you can customize the font styles for specific elements */
+            h1, h2, th, td {
+                font-family: 'Manrope', sans-serif;
+            }
+            
+            /* Add custom styles for the logo */
+            .header-logo {
+                max-width: 100px; /* Adjust the max-width as needed */
+                float: right;
+                margin-top: -30px; /* Adjust the margin-top as needed */
+            }
+
+            .table,
+                .jsgrid .jsgrid-table {
+                    --bs-table-bg: transparent;
+                    --bs-table-accent-bg: transparent;
+                    --bs-table-striped-color: #212529;
+                    --bs-table-striped-bg: #F4F5F7;
+                    --bs-table-active-color: #212529;
+                    --bs-table-active-bg: rgba(0, 0, 0, 0.1);
+                    --bs-table-hover-color: #212529;
+                    --bs-table-hover-bg: #eaeaf1;
+                    width: 100%;
+                    margin-bottom: 1rem;
+                    color: #212529;
+                    vertical-align: top;
+                    border-color: #dee2e6;
+                }
+        </style>
+    </head>
+<body>
+    <header class="mb-4">
+        <h1 class="text-danger">RED Report</h1>
+        <p>Month: {{ current_month }}</p>
+    </header>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h2 style="margin-bottom: 10px;">User Engagement Data</h2>
+                <table class="table table-bordered table-striped table-hover table-gray">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Date</th>
+                            <th>Number of User</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for date, count in zipped_data %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ date }}</td>
+                            <td>{{ count }}</td>
+                        </tr>
+                        {% endfor %}
+                        <!-- Add a row for total engagement -->
+                        <tr>
+                            <td colspan="2"><strong>Total</strong></td>
+                            <td><strong>{{ total_engagement }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS (optional) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

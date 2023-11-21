@@ -80,14 +80,14 @@
                         <div class="dropdown">
                           <button class="btn btn-light dropdown-toggle toggle-dark btn-sm mb-0 me-0" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="icon-download"></i> Export </button>
                           <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
-                            <a class="dropdown-item" href="#">PDF</a>
-                            <a class="dropdown-item" href="#">CSV</a>
+                            <a id="generatePDF" class="dropdown-item" href="#">PDF</a>
+                            <a id="generateCSV" class="dropdown-item" href="#">CSV</a>
                           </div>
                         </div>
                       </div>
                     </div>
                     <div class="d-sm-flex align-items-center mt-1 justify-content-between">
-                      <div class="col-lg-4">
+                      <div class="col-lg-6">
                         <div class="input-group input-daterange d-flex align-items-center">
                           <input type="text" class="form-control date-from" id="date-from">
                           <div class="input-group-addon mx-4">to</div>
@@ -97,7 +97,7 @@
                       </div>
                       <div id="performance-line-legend">
                         <div class="chartjs-legend">
-                          <ul><li><span style="background-color:#1F3BB3"></span>Satisfied</li>
+                          <ul><li><span style="background-color:#1F3BB3;"></span>Satisfied</li>
                             <li><span style="background-color:#52CDFF"></span>Unsatisfied</li>
                           </ul>
                         </div>
@@ -365,6 +365,75 @@
         }
       } 
   });
+</script>
+
+<script>
+  $(document).ready(function () {
+      function generatePDF() {
+          // Get date inputs
+          var dateFrom = $('#date-from').val();
+          var dateTo = $('#date-to').val();
+
+          // AJAX request to generate PDF
+          $.ajax({
+              url: '/generate-satisfaction-data-report',  // Replace with your Flask route for generating PDF
+              method: 'GET',
+              data: { dateFrom: dateFrom, dateTo: dateTo },
+              success: function () {
+                  console.log('PDF generated successfully');
+                  // You can add additional logic here if needed
+              },
+              error: function (error) {
+                  console.error('Error generating PDF:', error);
+              }
+          });
+      }
+
+      $('#generatePDF').click(function () {
+          generatePDF();
+      });
+  });
+</script>
+
+<script>
+  $(document).ready(function () {
+    // Event handler for the "Generate CSV" button
+    $("#generateCSV").on("click", function () {
+        // Get date inputs
+        var dateFrom = $('#date-from').val();
+        var dateTo = $('#date-to').val();
+
+        // AJAX request to generate and download CSV
+        $.ajax({
+            url: '/generate-ratings-csv',
+            method: 'GET',
+            data: { dateFrom: dateFrom, dateTo: dateTo },
+            success: function (data) {
+                // Get the current date
+                var currentDate = new Date().toLocaleDateString().replace(/\//g, '-');
+
+                // Trigger automatic download
+                var blob = new Blob([data], { type: 'text/csv' });
+                var link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = 'Ratings_Report_' + currentDate + '.csv';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Handle success, e.g., show a success message
+                console.log('CSV generated and downloaded successfully');
+            },
+            error: function (error) {
+                // Handle error, e.g., show an error message
+                console.error('Error generating CSV:', error);
+            }
+        });
+    });
+
+    // Add any additional logic or event handlers as needed
+});
+
 </script>
 
 {% endblock %}

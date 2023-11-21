@@ -48,12 +48,25 @@
                 <div class="card card-rounded">
                   <div class="card-body">
                     <div class="d-sm-flex justify-content-between align-items-start">
+                      <div class="col-md-9">
+                        <div class="row">
+                          <div class="form-group col-md-2">
+                            <label for="month" class="form-label">Select Month:</label>
+                            <select id="month" class="form-select">
+                            </select>
+                          </div>
+                          <div class="form-group col-md-1">
+                            <label for="month" class="form-label">.</label>
+                            <button type="button" class="btn btn-success form-select btn-sm" id="filter-month-btn">Filter</button>
+                          </div>
+                        </div>
+                    </div>
                     <div>
                       <div class="dropdown">
                         <button class="btn btn-light dropdown-toggle toggle-dark btn-sm mb-0 me-0" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="icon-download"></i> Export </button>
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
-                          <a id="generatePDF-data" class="dropdown-item" href="#">PDF</a>
-                          <a id="generateCSV-data" class="dropdown-item" href="#">CSV</a>
+                          <a class="dropdown-item" href="#">PDF</a>
+                          <a class="dropdown-item" href="#">CSV</a>
                         </div>
                       </div>
                     </div>
@@ -71,9 +84,6 @@
                             <tbody>
 
                             </tbody>
-                            <tfoot>
-                              <!-- Footer rows go here -->
-                            </tfoot>
                           </table>
                         </div>
                       </div>
@@ -229,15 +239,17 @@
   });
 </script>
 
+
 <script>
   $(document).ready(function () {
       // Fetch user engagement data on page load
       fetchUserEngagement();
 
-      function fetchUserEngagement() {
+      function fetchUserEngagement(month) {
           $.ajax({
-              type: "GET",  // Change the method to GET
+              type: "GET",
               url: "/fetch-user-engagement",
+              data: { month: month },  // Only include the selected month as a parameter
               success: function (response) {
                   updateTable(response.labels, response.data);
               },
@@ -249,43 +261,42 @@
 
       function updateTable(labels, data) {
           var tableBody = $("#userEngagementTable tbody");
-          var tableFooter = $("#userEngagementTable tfoot");
 
-          // Clear existing table rows and footer
+          // Clear existing table rows
           tableBody.empty();
-          tableFooter.empty();
 
           // Populate table with fetched data
-          var totalEngagement = 0;
           for (var i = 0; i < labels.length; i++) {
               var newRow = $("<tr>");
               newRow.append($("<td>").text(labels[i]));
               newRow.append($("<td>").text(data[i]));
               tableBody.append(newRow);
-
-              // Update total engagement
-              totalEngagement += data[i];
           }
-
-          // Add row for total engagement
-          var totalRow = $("<tr>");
-          totalRow.append($("<td>").text("Total").css("font-weight", "bold"));
-          totalRow.append($("<td>").text(totalEngagement).css("font-weight", "bold"));
-          tableFooter.append(totalRow);
       }
 
+      // Event handler for the filter button
+      $("#filter-month-btn").on("click", function () {
+          var selectedMonth = $("#month").val();
+          fetchUserEngagement(selectedMonth);
+      });
+
+      // Initial fetch with current month
+      var currentMonth = (new Date().getMonth() + 1).toString().padStart(2, '0');
+      fetchUserEngagement(currentMonth);
+
       // Optional: Add code for updating the table periodically
-      setInterval(fetchUserEngagement, 60000);
+      setInterval(function () {
+          var selectedMonth = $("#month").val();
+          fetchUserEngagement(selectedMonth);
+      }, 60000);
   });
 </script>
-
-
 
 <!--Generate Report-->
 
 <script>
   $(document).ready(function () {
-
+    // Function to handle PDF generation
     function generatePDF() {
         // Get date inputs
         var dateFrom = $('#date-from').val();
@@ -306,6 +317,7 @@
         });
     }
 
+    // Click event handler for the "PDF" option in the dropdown
     $('#generatePDF').click(function () {
         generatePDF();
     });
@@ -317,122 +329,23 @@
 
 <script>
   $(document).ready(function () {
-    function generatePDF() {
-        // AJAX request to generate PDF for the current month
-        $.ajax({
-            url: '/generate-engagement-data-report',
-            method: 'GET',
-            success: function (response) {
-                console.log('PDF generated successfully');
-                // You can add additional logic here if needed
-            },
-            error: function (error) {
-                console.error('Error generating PDF:', error);
-            }
-        });
-    }
-
-    $('#generatePDF-data').click(function () {
-        generatePDF();
-    });
-
-    // Add any additional logic or event handlers as needed
-  });
-</script>
-
-
-<!--Generate CSV-->
-
-<script>
-  $(document).ready(function () {
-      // Event handler for the "Generate CSV" button
-      $("#generateCSV").on("click", function () {
-          // Get date inputs
-          var dateFrom = $('#date-from').val();
-          var dateTo = $('#date-to').val();
-
-          // AJAX request to generate CSV
-          $.ajax({
-              url: '/generate-user-engagement-data-csv',
-              method: 'GET',
-              data: { date_from: dateFrom, date_to: dateTo },
-              success: function (data) {
-                  // Handle success, e.g., show a success message
-                  console.log('CSV generated successfully');
-
-                  // Trigger download with the desired filename
-                  downloadCSV(data, 'User_Engagement_Data_' + getCurrentDate() + '.csv');
-              },
-              error: function (error) {
-                  // Handle error, e.g., show an error message
-                  console.error('Error generating CSV:', error);
-              }
-          });
-      });
-
-      // Function to trigger CSV download
-      function downloadCSV(data, filename) {
-          var blob = new Blob([data], { type: 'text/csv' });
-          var link = document.createElement('a');
-
-          link.href = window.URL.createObjectURL(blob);
-          link.download = filename;
-
-          // Append the link to the body
-          document.body.appendChild(link);
-
-          // Trigger a click event on the link
-          link.click();
-
-          // Remove the link from the body
-          document.body.removeChild(link);
+      // Populate months
+      for (let i = 1; i <= 12; i++) {
+          $('#month').append($('<option>', {
+              value: i < 10 ? '0' + i : i,
+              text: new Date(2000, i - 1, 1).toLocaleString('en-US', { month: 'long' })
+          }));
       }
 
-      // Function to get the current date in the 'YYYY-MM-DD' format
-      function getCurrentDate() {
-          var today = new Date();
-          var dd = String(today.getDate()).padStart(2, '0');
-          var mm = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
-          var yyyy = today.getFullYear();
+      // Set default value to the current month
+      const currentMonth = (new Date().getMonth() + 1).toString().padStart(2, '0');
+      $('#month').val(currentMonth);
 
-          return yyyy + '-' + mm + '-' + dd;
+      function isValidMonth(month) {
+          return !isNaN(month) && parseInt(month) >= 1 && parseInt(month) <= 12;
       }
-
-      // Add any additional logic or event handlers as needed
   });
 </script>
-
-<!-- Add this script in your HTML template -->
-<script>
-  $(document).ready(function () {
-      // Event handler for the "Generate CSV" button
-      $("#generateCSV-data").on("click", function () {
-          // AJAX request to generate CSV for the current month
-          $.ajax({
-              url: '/generate-engagement-month-csv',
-              method: 'GET',
-              success: function (data) {
-                  // Handle success, e.g., show a success message
-                  console.log('CSV generated successfully');
-                  
-                  // Trigger the CSV download
-                  window.location.href = '/generate-engagement-month-csv';
-              },
-              error: function (error) {
-                  // Handle error, e.g., show an error message
-                  console.error('Error generating CSV:', error);
-              }
-          });
-      });
-
-      // Add any additional logic or event handlers as needed
-  });
-</script>
-
-
-
-
-
 
 </html>
 

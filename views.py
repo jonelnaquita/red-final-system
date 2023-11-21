@@ -76,3 +76,11 @@ def conversationLength():
     cursor.close()
     
     return render_template('conversationlength.html', sessions=sessions)
+
+@views.route('/privacy-policy')
+def privacyPolicy():
+    if 'login' not in session or not session['login']:
+        # If 'login' session variable is not set or is False, redirect to login page
+        return redirect(url_for('login'))
+    
+    return render_template('privacypolicy.html')

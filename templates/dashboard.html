@@ -8,209 +8,194 @@
             <div class="row">
                 <div class="col-sm-12">
                     <div class="home-tab">
-                        <div class="d-sm-flex align-items-center justify-content-between border-bottom">
-                            <div>
-                              <div class="btn-wrapper">
-                                <a href="#" class="btn btn-otline-dark"><i class="icon-printer"></i> Print</a>
-                                <a href="#" class="btn btn-primary text-white me-0"><i class="icon-download"></i> Export</a>
+                      <div class="tab-content tab-content-basic">
+                        <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview"> 
+                          <div class="row">
+                            <div class="col-sm-12">
+                                <div class="statistics-details d-flex align-items-center justify-content-between">
+                                    <div>
+                                      <p class="statistics-title">Sessions</p>
+                                      <h3 class="rate-percentage" id="session-count"></h3>
+                                      <p class="text-danger d-flex"><i class="mdi"></i><span id="session-percentage-change">Loading...</span></p>
+                                    </div>
+                                    <div>
+                                      <p class="statistics-title">Bot Responses</p>
+                                      <h3 class="rate-percentage" id="bot-response-count"></h3>
+                                      <p class="text-danger d-flex"><i class="mdi"></i><span id="botresponse-percentage-change">Loading...</span></p>
+                                    </div>
+                                    <div>
+                                      <p class="statistics-title">In Messages</p>
+                                      <h3 class="rate-percentage" id="in-message-count"></h3>
+                                      <p class="text-danger d-flex"><i class="mdi"></i><span id="inmessages-percentage-change">Loading...</span></p>
+                                    </div>
+                                    <div>
+                                      <p class="statistics-title">Average Response Time</p>
+                                      <h3 class="rate-percentage" id="avg-response-time"></h3>
+                                      <p class="text-danger d-flex"><i class="mdi"></i><span id="averageresponse-percentage-change">Loading...</span></p>
+                                    </div>
+                                    <div>
+                                      <p class="statistics-title">Site Visitors</p>
+                                      <h3 class="rate-percentage" id="count-visitors"></h3>
+                                      <p class="text-danger d-flex"><i class="mdi"></i><span id="sitevisitors-percentage-change">Loading...</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                          </div>
+
+                          <div class="row">
+                            <div class="col-lg-8 d-flex flex-column">
+                              <div class="row flex-grow">
+                                <div class="col-12 col-lg-4 col-lg-12 grid-margin stretch-card">
+                                  <div class="card card-rounded">
+                                    <div class="card-body">
+                                      <div class="d-sm-flex justify-content-between align-items-start">
+                                        <div>
+                                          <h4 class="card-title card-title-dash">Performance Line Chart</h4>
+                                          <h5 class="card-subtitle card-subtitle-dash">RED Engagement Per Day</h5>
+                                        </div>
+                                      </div>
+                                      <div class="d-sm-flex align-items-center mt-1 justify-content-between">
+                                        <div></div>
+                                        <div id="performance-line-legend"><div class="chartjs-legend"><ul><li><span style="background-color:#1F3BB3"></span>This week</li><li><span style="background-color:#52CDFF"></span>Last week</li></ul></div></div>
+                                      </div>
+                                      <div class="chartjs-wrapper mt-4">
+                                        <div class="chartjs-size-monitor">
+                                          <div class="chartjs-size-monitor-expand">
+                                            <div class="">
+                                            </div>
+                                          </div>
+                                          <div class="chartjs-size-monitor-shrink">
+                                            <div class="">
+
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <canvas id="performaneLine" style="display: block; height: 150px; width: 361px;" width="451" height="187" class="chartjs-render-monitor"></canvas> 
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="col-lg-4 d-flex flex-column">
+                              <div class="row flex-grow">
+                                <div class="col-md-6 col-lg-12 grid-margin stretch-card">
+                                  <div class="card bg-danger card-rounded">
+                                    <div class="card-body pb-0">
+                                      <h4 class="card-title card-title-dash text-white mb-4">Sessions Summary</h4>
+                                      <div class="row">
+                                        <div class="col-sm-4">
+                                          <p class="status-summary-ight-white mb-1">This Week</p>
+                                          <h2 class="text-light" id="total-session"></h2>
+                                        </div>
+                                        <div class="col-sm-8 ml-2">
+                                          <div class="status-summary-chart-wrapper pb-4"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
+                                            <canvas id="status-summary" width="451" height="82" style="display: block; height: 66px; width: 361px;" class="chartjs-render-monitor"></canvas>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="col-md-6 col-lg-12 grid-margin stretch-card">
+                                  <div class="card card-rounded">
+                                    <div class="card-body">
+                                      <h4 class="card-title card-title-dash mb-4">Site Visitors Monthly Summary</h4>
+                                      <div class="row">
+                                        <div class="col-sm-6">
+                                          <div class="d-flex justify-content-between align-items-center mb-2 mb-sm-0">
+                                              <div class="circle-progress-width">
+                                                  <div id="totalVisitors" class="progressbar-js-circle pr-2">
+                                                      <div class="progressbar-text" style="position: absolute; left: 50%; top: 50%; padding: 0px; margin: 0px; transform: translate(-50%, -50%); color: rgb(255, 255, 255); font-size: 0rem;">10</div>
+                                                  </div>
+                                              </div>
+                                              <div>
+                                                  <p class="text-small mb-2">Total Visitors</p>
+                                                  <h4 class="mb-0 fw-bold">{{ monthly_visitors }}</h4> <!-- Display monthly visitors count -->
+                                              </div>
+                                          </div>
+                                      </div>
+                                  
+                                      <div class="col-sm-6">
+                                          <div class="d-flex justify-content-between align-items-center">
+                                              <div class="circle-progress-width">
+                                                  <div id="visitperday" class="progressbar-js-circle pr-2">
+                                                      <div class="progressbar-text" style="position: absolute; left: 50%; top: 50%; padding: 0px; margin: 0px; transform: translate(-50%, -50%); color: rgb(255, 255, 255); font-size: 0rem;">100</div>
+                                                  </div>
+                                              </div>
+                                              <div>
+                                                  <p class="text-small mb-2">Visits Today</p>
+                                                  <h4 class="mb-0 fw-bold">{{ today_visitors }}</h4> <!-- Display daily visitors count -->
+                                              </div>
+                                          </div>
+                                      </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
-                          <div class="tab-content tab-content-basic">
-                            <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview"> 
-                              <div class="row">
-                                <div class="col-sm-12">
-                                    <div class="statistics-details d-flex align-items-center justify-content-between">
+                          <div class="row">
+                            <div class="col-lg-8 d-flex flex-column">
+                              <div class="row flex-grow">
+                                <div class="col-12 grid-margin stretch-card">
+                                  <div class="card card-rounded">
+                                    <div class="card-body">
+                                      <div class="d-sm-flex justify-content-between align-items-start">
                                         <div>
-                                          <p class="statistics-title">Sessions</p>
-                                          <h3 class="rate-percentage" id="session-count"></h3>
-                                          <p class="text-danger d-flex"><i class="mdi mdi-menu-up"></i><span id="session-percentage-change">Loading...</span></p>
+                                          <h4 class="card-title card-title-dash">Performance Bar Chart</h4>
+                                          <p class="card-subtitle card-subtitle-dash">RED Engagement Per Month</p>
                                         </div>
                                         <div>
-                                          <p class="statistics-title">Bot Responses</p>
-                                          <h3 class="rate-percentage" id="bot-response-count"></h3>
-                                          <p class="text-danger d-flex"><i class="mdi"></i><span id="botresponse-percentage-change">Loading...</span></p>
-                                        </div>
-                                        <div>
-                                          <p class="statistics-title">In Messages</p>
-                                          <h3 class="rate-percentage" id="in-message-count"></h3>
-                                          <p class="text-danger d-flex"><i class="mdi"></i><span id="inmessages-percentage-change">Loading...</span></p>
-                                        </div>
-                                        <div>
-                                          <p class="statistics-title">Average Response Time</p>
-                                          <h3 class="rate-percentage" id="avg-response-time"></h3>
-                                          <p class="text-danger d-flex"><i class="mdi"></i><span id="averageresponse-percentage-change">Loading...</span></p>
-                                        </div>
-                                        <div>
-                                          <p class="statistics-title">Site Visitors</p>
-                                          <h3 class="rate-percentage" id="count-visitors"></h3>
-                                          <p class="text-danger d-flex"><i class="mdi"></i><span id="sitevisitors-percentage-change">Loading...</span></p>
-                                        </div>
-                                    </div>
-                                </div>
-                              </div>
-
-                              <div class="row">
-                                <div class="col-lg-8 d-flex flex-column">
-                                  <div class="row flex-grow">
-                                    <div class="col-12 col-lg-4 col-lg-12 grid-margin stretch-card">
-                                      <div class="card card-rounded">
-                                        <div class="card-body">
-                                          <div class="d-sm-flex justify-content-between align-items-start">
-                                            <div>
-                                             <h4 class="card-title card-title-dash">Performance Line Chart</h4>
-                                             <h5 class="card-subtitle card-subtitle-dash">RED Engagement Per Day</h5>
-                                            </div>
-                                            <div class="dropdown">
-                                              <button class="btn btn-light dropdown-toggle toggle-dark btn-lg mb-0 me-0" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="icon-download"></i> Export </button>
-                                              <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
-                                                <a class="dropdown-item" href="#">PDF</a>
-                                                <a class="dropdown-item" href="#">CSV</a>
-                                              </div>
+                                          <div class="dropdown">
+                                            <button class="btn btn-light dropdown-toggle toggle-dark btn-lg mb-0 me-0" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="icon-download"></i> Export </button>
+                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
+                                              <a class="dropdown-item" href="#">PDF</a>
+                                              <a class="dropdown-item" href="#">CSV</a>
                                             </div>
                                           </div>
-                                          <div class="d-sm-flex align-items-center mt-1 justify-content-between">
-                                            <div></div>
-                                            <div id="performance-line-legend"><div class="chartjs-legend"><ul><li><span style="background-color:#1F3BB3"></span>This week</li><li><span style="background-color:#52CDFF"></span>Last week</li></ul></div></div>
-                                          </div>
-                                          <div class="chartjs-wrapper mt-4">
-                                            <div class="chartjs-size-monitor">
-                                              <div class="chartjs-size-monitor-expand">
-                                                <div class="">
-                                                </div>
-                                              </div>
-                                              <div class="chartjs-size-monitor-shrink">
-                                                <div class="">
-
-                                                </div>
-                                              </div>
-                                            </div>
-                                            <canvas id="performaneLine" style="display: block; height: 150px; width: 361px;" width="451" height="187" class="chartjs-render-monitor"></canvas> 
-                                          </div>
                                         </div>
+                                      </div>
+                                      <div class="d-sm-flex align-items-center mt-1 justify-content-between">
+                                        <div></div>
+                                        <div class="me-3"><div id="marketing-overview-legend"><div class="chartjs-legend"><ul><li class="text-muted text-small"><span style="background-color:#52CDFF"></span>Last week</li><li class="text-muted text-small"><span style="background-color:#1F3BB3"></span>This week</li></ul></div></div></div>
+                                      </div>
+                                      <div class="chartjs-bar-wrapper mt-3"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
+                                        <canvas id="performanceBarChart" width="451" height="187" style="display: block; height: 350px; width: 361px;" class="chartjs-render-monitor"></canvas>
                                       </div>
                                     </div>
                                   </div>
                                 </div>
-                                <div class="col-lg-4 d-flex flex-column">
-                                  <div class="row flex-grow">
-                                    <div class="col-md-6 col-lg-12 grid-margin stretch-card">
-                                      <div class="card bg-danger card-rounded">
-                                        <div class="card-body pb-0">
-                                          <h4 class="card-title card-title-dash text-white mb-4">Sessions Summary</h4>
-                                          <div class="row">
-                                            <div class="col-sm-4">
-                                              <p class="status-summary-ight-white mb-1">This Week</p>
-                                              <h2 class="text-light" id="total-session"></h2>
-                                            </div>
-                                            <div class="col-sm-8 ml-2">
-                                              <div class="status-summary-chart-wrapper pb-4"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
-                                                <canvas id="status-summary" width="451" height="82" style="display: block; height: 66px; width: 361px;" class="chartjs-render-monitor"></canvas>
-                                              </div>
-                                            </div>
+                              </div>
+                            </div>
+                            <div class="col-lg-4 d-flex flex-column">
+                              <div class="row flex-grow">
+                                <div class="col-12 grid-margin stretch-card">
+                                  <div class="card card-rounded">
+                                    <div class="card-body">
+                                      <div class="row">
+                                        <div class="col-lg-12"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
+                                          <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h4 class="card-title card-title-dash">User Satisfaction</h4>
                                           </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div class="col-md-6 col-lg-12 grid-margin stretch-card">
-                                      <div class="card card-rounded">
-                                        <div class="card-body">
-                                          <h4 class="card-title card-title-dash mb-4">Site Visitors Monthly Summary</h4>
-                                          <div class="row">
-                                            <div class="col-sm-6">
-                                              <div class="d-flex justify-content-between align-items-center mb-2 mb-sm-0">
-                                                  <div class="circle-progress-width">
-                                                      <div id="totalVisitors" class="progressbar-js-circle pr-2">
-                                                          <div class="progressbar-text" style="position: absolute; left: 50%; top: 50%; padding: 0px; margin: 0px; transform: translate(-50%, -50%); color: rgb(255, 255, 255); font-size: 0rem;">10</div>
-                                                      </div>
-                                                  </div>
-                                                  <div>
-                                                      <p class="text-small mb-2">Total Visitors</p>
-                                                      <h4 class="mb-0 fw-bold">{{ monthly_visitors }}</h4> <!-- Display monthly visitors count -->
-                                                  </div>
-                                              </div>
-                                          </div>
-                                      
-                                          <div class="col-sm-6">
-                                              <div class="d-flex justify-content-between align-items-center">
-                                                  <div class="circle-progress-width">
-                                                      <div id="visitperday" class="progressbar-js-circle pr-2">
-                                                          <div class="progressbar-text" style="position: absolute; left: 50%; top: 50%; padding: 0px; margin: 0px; transform: translate(-50%, -50%); color: rgb(255, 255, 255); font-size: 0rem;">100</div>
-                                                      </div>
-                                                  </div>
-                                                  <div>
-                                                      <p class="text-small mb-2">Visits Today</p>
-                                                      <h4 class="mb-0 fw-bold">{{ today_visitors }}</h4> <!-- Display daily visitors count -->
-                                                  </div>
-                                              </div>
-                                          </div>
-                                          </div>
+                                          <canvas class="my-auto chartjs-render-monitor" id="doughnutChart" height="300" width="451" style="display: block; height: 240px; width: 361px;"></canvas>
+                                          <div id="doughnut-chart-legend" class="mt-5 text-center"><div class="chartjs-legend"><ul class="justify-content-center"><li><span style="background-color:#1F3BB3"></span>Total</li><li><span style="background-color:#FDD0C7"></span>Net</li><li><span style="background-color:#52CDFF"></span>Gross</li><li><span style="background-color:#81DADA"></span>AVG</li></ul></div></div>
                                         </div>
                                       </div>
                                     </div>
                                   </div>
                                 </div>
                               </div>
-                              <div class="row">
-                                <div class="col-lg-8 d-flex flex-column">
-                                  <div class="row flex-grow">
-                                    <div class="col-12 grid-margin stretch-card">
-                                      <div class="card card-rounded">
-                                        <div class="card-body">
-                                          <div class="d-sm-flex justify-content-between align-items-start">
-                                            <div>
-                                              <h4 class="card-title card-title-dash">Performance Bar Chart</h4>
-                                             <p class="card-subtitle card-subtitle-dash">RED Engagement Per Month</p>
-                                            </div>
-                                            <div>
-                                              <div class="dropdown">
-                                                <button class="btn btn-light dropdown-toggle toggle-dark btn-lg mb-0 me-0" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="icon-download"></i> Export </button>
-                                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
-                                                  <a class="dropdown-item" href="#">PDF</a>
-                                                  <a class="dropdown-item" href="#">CSV</a>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
-                                          <div class="d-sm-flex align-items-center mt-1 justify-content-between">
-                                            <div></div>
-                                            <div class="me-3"><div id="marketing-overview-legend"><div class="chartjs-legend"><ul><li class="text-muted text-small"><span style="background-color:#52CDFF"></span>Last week</li><li class="text-muted text-small"><span style="background-color:#1F3BB3"></span>This week</li></ul></div></div></div>
-                                          </div>
-                                          <div class="chartjs-bar-wrapper mt-3"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
-                                            <canvas id="performanceBarChart" width="451" height="187" style="display: block; height: 350px; width: 361px;" class="chartjs-render-monitor"></canvas>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div class="col-lg-4 d-flex flex-column">
-                                  <div class="row flex-grow">
-                                    <div class="col-12 grid-margin stretch-card">
-                                      <div class="card card-rounded">
-                                        <div class="card-body">
-                                          <div class="row">
-                                            <div class="col-lg-12"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
-                                              <div class="d-flex justify-content-between align-items-center mb-3">
-                                                <h4 class="card-title card-title-dash">User Satisfaction</h4>
-                                              </div>
-                                              <canvas class="my-auto chartjs-render-monitor" id="doughnutChart" height="300" width="451" style="display: block; height: 240px; width: 361px;"></canvas>
-                                              <div id="doughnut-chart-legend" class="mt-5 text-center"><div class="chartjs-legend"><ul class="justify-content-center"><li><span style="background-color:#1F3BB3"></span>Total</li><li><span style="background-color:#FDD0C7"></span>Net</li><li><span style="background-color:#52CDFF"></span>Gross</li><li><span style="background-color:#81DADA"></span>AVG</li></ul></div></div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div class="row flex-grow">
-                                    <div class="col-12 grid-margin stretch-card">
-                                    </div>
-                                  </div>
+                              <div class="row flex-grow">
+                                <div class="col-12 grid-margin stretch-card">
                                 </div>
                               </div>
                             </div>
                           </div>
                         </div>
+                      </div>
+                    </div>
                 </div>
               </div>
         </div>
@@ -226,6 +211,7 @@
     fetchPercentageChange("#inmessages-percentage-change", "/fetch-inmessages-change");
     fetchPercentageChange("#botresponse-percentage-change", "/fetch-botresponse-change");
     fetchPercentageChange("#averageresponse-percentage-change", "/fetch-averageresponse-change");
+    fetchPercentageChange("#sitevisitors-percentage-change", "/fetch-visitor-change");
 
     function fetchPercentageChange(elementId, route) {
       $.ajax({
@@ -236,14 +222,6 @@
           var percentageChange = data.percentage_change;
           var sign = percentageChange > 0 ? '+' : '';
           $(elementId).text(sign + percentageChange + "%");
-
-          // Check the condition and update the icon accordingly
-          var iconElement = $(elementId).prev().find(".mdi");
-          if (percentageChange > 0) {
-            iconElement.removeClass("mdi-menu-down").addClass("mdi-menu-up");
-          } else {
-            iconElement.removeClass("mdi-menu-up").addClass("mdi-menu-down");
-          }
         },
         error: function (error) {
           console.error("Error fetching data:", error);

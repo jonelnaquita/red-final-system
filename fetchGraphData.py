@@ -54,6 +54,41 @@ def fetch_session_change():
     return jsonify(response)
 
 
+#Visitor Increase/Decrease
+@fetchData.route("/fetch-visitor-change", methods=["GET"])
+def fetch_visitor_change():
+    # Calculate date ranges for this week and last week
+    today = datetime.now().date()
+    last_week_start = today - timedelta(days=today.weekday() + 7)
+    last_week_end = last_week_start + timedelta(days=6)
+
+    this_week_start = today - timedelta(days=today.weekday())
+    this_week_end = today
+
+    # Query to count the number of sessions for last week and this week
+    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT COUNT(ip_address) AS visitor_number FROM tblvisitors WHERE DATE(date) BETWEEN %s AND %s",
+                   (last_week_start, last_week_end))
+    last_week_data = cursor.fetchone()
+
+    cursor.execute("SELECT COUNT(ip_address) AS visitor_number FROM tblvisitors WHERE DATE(date) BETWEEN %s AND %s",
+                   (this_week_start, this_week_end))
+    this_week_data = cursor.fetchone()
+
+    cursor.close()
+
+    # Calculate the percentage change
+    last_week_visitor = last_week_data["visitor_number"]
+    this_week_visitor = this_week_data["visitor_number"]
+
+    percentage_change = ((this_week_visitor - last_week_visitor) / last_week_visitor) * 100
+
+    response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
+    return jsonify(response)
+
+
+
+
 @fetchData.route("/fetch-inmessages-change", methods=["GET"])
 def fetch_inmessages_change():
     # Calculate date ranges for this week and last week
@@ -76,13 +111,22 @@ def fetch_inmessages_change():
 
     cursor.close()
 
-    # Calculate the percentage change
-    last_week_inmessages = last_week_data["inmessages"]
-    this_week_inmessages = this_week_data["inmessages"]
+    # Check if the result is None
+    if last_week_data is None or this_week_data is None:
+        response = {'percentage_change': None}  # Handle the case when data is not available
+    else:
+        # Calculate the percentage change
+        last_week_inmessages = last_week_data["inmessages"]
+        this_week_inmessages = this_week_data["inmessages"]
 
-    percentage_change = ((this_week_inmessages - last_week_inmessages) / last_week_inmessages) * 100
+        # Avoid division by zero
+        if last_week_inmessages == 0:
+            percentage_change = float('inf')  # Positive infinity for no messages last week
+        else:
+            percentage_change = ((this_week_inmessages - last_week_inmessages) / last_week_inmessages) * 100
 
-    response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
+        response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
+
     return jsonify(response)
 
 
@@ -140,14 +184,24 @@ def fetch_averageresponse_change():
 
     cursor.close()
 
-    # Calculate the percentage change
-    last_week_averageresponse = last_week_data["averageresponse"]
-    this_week_averageresponse = this_week_data["averageresponse"]
+    # Check if the result is None
+    if last_week_data is None or this_week_data is None:
+        response = {'percentage_change': None}  # Handle the case when data is not available
+    else:
+        # Calculate the percentage change
+        last_week_averageresponse = last_week_data["averageresponse"]
+        this_week_averageresponse = this_week_data["averageresponse"]
 
-    percentage_change = ((this_week_averageresponse - last_week_averageresponse) / last_week_averageresponse) * 100
+        # Avoid division by zero
+        if last_week_averageresponse == 0:
+            percentage_change = float('inf')  # Positive infinity for no average response last week
+        else:
+            percentage_change = ((this_week_averageresponse - last_week_averageresponse) / last_week_averageresponse) * 100
 
-    response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
+        response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
+
     return jsonify(response)
+
 
 
 #################### DASHBOARD DATA ##########################
@@ -522,8 +576,11 @@ def filter_conversation_length():
     result = cursor.fetchall()
     cursor.close()
 
-    # Extract data for chart
-    sessionID = [row["sessionID"] for row in result]
+    # Map sessionIDs to user numbers
+    user_number_mapping = {session['sessionID']: f"User #{index + 1}" for index, session in enumerate(result)}
+
+    # Modify the response to include user numbers
+    sessionID = [user_number_mapping[row["sessionID"]] for row in result]
     conversationLength = [row["conversation_length"] for row in result]
     ratings = [row["rating"] for row in result]
 
@@ -535,3 +592,115 @@ def filter_conversation_length():
     }
 
     return jsonify(response)
+
+
+#################### FETCH THE MESSAGES ##############################
+
+@fetchData.route('/fetch-user-data/<session_id>')
+def fetch_user_data(session_id):
+    try:
+        # Query to fetch user data based on sessionID
+        cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("""
+            SELECT 
+                tc.sessionID,
+                tc.timestamp,
+                tc.incomingMessage AS user_messages,
+                tc.botMessage AS bot_messages,
+                TIMESTAMPDIFF(MINUTE, MIN(tc.timestamp), MAX(tc.timestamp)) AS conversation_length,
+                tr.rating
+            FROM tblconversations tc
+            LEFT JOIN tblratings tr ON tc.sessionID = tr.sessionID
+            WHERE tc.sessionID = %s
+            GROUP BY tc.sessionID
+            ORDER BY tc.timestamp DESC
+        """, (session_id,))
+
+        result = cursor.fetchone()
+        cursor.close()
+
+        if result:
+            session_id = result['sessionID']
+            user_messages = result['user_messages']
+            bot_messages = result['bot_messages']
+            conversation_length = result['conversation_length']
+            ratings = result['rating'] if result['rating'] is not None else "No Rating"
+
+            # Format timestamp to display in the desired format
+            message_date_time = result['timestamp'].strftime("%d/%m/%Y at %H:%M")
+
+            # Prepare the response
+            response = {
+                "session_id": session_id,
+                "user_messages": user_messages,
+                "bot_messages": bot_messages,
+                "conversation_length": f"{conversation_length} Mins.",
+                "ratings": ratings,
+                "message_date_time": message_date_time
+            }
+
+            return jsonify(response)
+        else:
+            return jsonify({"error": "Session not found"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}),
+
+    
+
+@fetchData.route('/fetch-users-data')
+def fetchUsersData():
+    try:
+        # Get the date from the input field
+        date_from = request.args.get("date_from")
+        
+        # Convert the date string to a datetime object
+        selected_date = datetime.strptime(date_from, "%Y-%m-%d").date()
+
+        # Fetch user data based on sessionID and date
+        cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("""
+            SELECT 
+                @row_number := @row_number + 1 AS user_number,
+                tc.sessionID,
+                TIMESTAMPDIFF(MINUTE, MIN(tc.timestamp), MAX(tc.timestamp)) AS conversation_length,
+                COALESCE(MAX(tr.rating), 'No Rating') AS ratings
+            FROM tblconversations tc
+            LEFT JOIN tblratings tr ON tc.sessionID = tr.sessionID
+            CROSS JOIN (SELECT @row_number := 0) AS rn
+            WHERE DATE(tc.timestamp) = %s
+            GROUP BY tc.sessionID
+        """, (selected_date,))
+        result = cursor.fetchall()
+        cursor.close()
+
+        # Prepare the response
+        response = [{
+            "user_number": row["user_number"],
+            "session_id": row["sessionID"],
+            "conversation_length": row["conversation_length"],
+            "ratings": row["ratings"]
+        } for row in result]
+
+        return jsonify(response)
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+    
+
+@fetchData.route('/fetch-conversation', methods=['GET'])
+def get_conversation():
+    session_id = request.args.get('sessionID')
+    # Fetch the conversation for the given session ID from the database
+    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("""
+        SELECT timestamp, incomingMessage, botMessage
+        FROM tblconversations
+        WHERE sessionID = %s
+        ORDER BY timestamp ASC
+    """, (session_id,))
+    conversation = cursor.fetchall()
+    cursor.close()
+    
+    return jsonify(conversation)
+

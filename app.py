@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_mysqldb import MySQL
+from MySQLdb import OperationalError
+
 from datetime import datetime, timedelta
 from apiip import apiip
 import pytz
@@ -8,9 +10,12 @@ import json
 import re
 import bcrypt
 import requests
+import pdfkit
+
 from views import views
 from utils import utils
 from fetchGraphData import fetchData
+from generateReport import report
 
 import xml.etree.ElementTree as ET
 import emoji
@@ -52,19 +57,19 @@ app = Flask(__name__,
 
 app.secret_key = 'xyzsdfg'
 
-app.config['MYSQL_HOST'] = "bteoc1hjrvxi0jsf8u2d-mysql.services.clever-cloud.com"
-app.config['MYSQL_USER'] = "u4ii1cazgwjra6qw"
-app.config['MYSQL_PORT'] = 3306
-app.config['MYSQL_PASSWORD'] = "M8iNilfIRKii1a2n4tL5"
-app.config['MYSQL_DB'] = "bteoc1hjrvxi0jsf8u2d"
-#app.config['MYSQL_DATABASE_URI'] = 'mysql://admin:hXtRVj9v@mysql-152093-0.cloudclusters.net:19876/redchatbot?init_command=SET time_zone=+08:00'
+app.config['MYSQL_HOST'] = "localhost"
+app.config['MYSQL_USER'] = "root"
+app.config['MYSQL_PASSWORD'] = ""
+app.config['MYSQL_DB'] = "redcms"
+app.config['MYSQL_AUTOCOMMIT'] = True
+
+mysql = MySQL(app)
 
 #Register Views
 app.register_blueprint(views)
 app.register_blueprint(utils)
 app.register_blueprint(fetchData)
-
-mysql = MySQL(app)
+app.register_blueprint(report)
 
 load_dotenv()
 # Load environment variables
@@ -105,6 +110,7 @@ def home():
     cursor.execute("INSERT INTO tblvisitors (ip_address, city, region, country, date) VALUES (%s, %s, %s, %s, %s)",
                    (visitor_ip, city, region, country, timestamp))
     mysql.connection.commit()
+    cursor.close()
     return render_template('index.html')
 
 def check_password(password, hashed_password):
@@ -421,6 +427,9 @@ def save_text():
 
         text = removeStyles(text)
         text_data.append(text)
+        
+        ph_time = pytz.timezone('Asia/Manila')
+        dateAdded = datetime.now(ph_time)
 
         try:
             # Index text data in Pinecone
@@ -446,7 +455,7 @@ def save_text():
 
             # Create a query to save in MySQL
             cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            cursor.execute("INSERT INTO tbldata (vectorID, dataSource, dataText, characters, status) VALUES (%s, %s, %s, %s, %s)",(vectorID, dataSource, text, characters, status))
+            cursor.execute("INSERT INTO tbldata (vectorID, dataSource, dataText, characters, status, dateAdded) VALUES (%s, %s, %s, %s, %s, %s)",(vectorID, dataSource, text, characters, status, dateAdded))
             mysql.connection.commit()
 
             # Insert "Processed" status into tbldocuments
@@ -534,6 +543,7 @@ def editFAQData():
         faq_id = request.form['faqID']
         question = request.form['questions']
         answer = request.form['answers']
+        office = request.form['selectOffice']
 
         answer = removeStyles(answer)
 
@@ -546,7 +556,7 @@ def editFAQData():
 
         # Update the question and answer in MySQL
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("UPDATE tbldata SET dataFAQQuestion = %s, dataFAQAnswer = %s, characters = %s WHERE id = %s", (question, answer, characters, faq_id))
+        cursor.execute("UPDATE tbldata SET dataFAQQuestion = %s, dataFAQAnswer = %s, office = %s, characters = %s WHERE id = %s", (question, answer, office, characters, faq_id))
         mysql.connection.commit()
         cursor.close()
 
@@ -603,7 +613,9 @@ def save_faq():
         question = request.form['questions']
         answer = request.form['answers']
         dataSource = "FAQ"
-        office = request.form['selectOffice']  # Get the selected office value
+        office = request.form['selectOffice']
+        ph_time = pytz.timezone('Asia/Manila')
+        dateAdded = datetime.now(ph_time)
 
         try:
             # Check if both question and answer are provided
@@ -640,7 +652,7 @@ def save_faq():
 
             # Create a query to save in MySQL
             cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            cursor.execute("INSERT INTO tbldata (vectorID, dataSource, dataText, dataFAQQuestion, dataFAQAnswer, characters, status, office) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", (vectorID, dataSource, dataText, question, removeStyles(answer), characters, status, office))
+            cursor.execute("INSERT INTO tbldata (vectorID, dataSource, dataText, dataFAQQuestion, dataFAQAnswer, characters, status, office, dateAdded) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (vectorID, dataSource, dataText, question, removeStyles(answer), characters, status, office, dateAdded))
             mysql.connection.commit()
             cursor.close()
             
@@ -683,9 +695,9 @@ def query_refiner(conversation):
 
     response = openai.Completion.create(
     model="gpt-3.5-turbo-instruct",
-    prompt=f"Provide the second question you see on the context provided. Don't rephrase anything! \n\nContext: \n{conversation}\n\n\nRefined Query:",
+    prompt=f"Provide the second question you see on the context provided. Don't rephrase anything! Keep it one question only. \n\nContext: \n{conversation}\n\n\nRefined Query:",
     temperature=0,
-    max_tokens=20,
+    max_tokens=30,
     top_p=1,
     frequency_penalty=0,
     presence_penalty=0
@@ -694,118 +706,108 @@ def query_refiner(conversation):
 
 @app.route('/dialogflow', methods=['POST'])
 def dialogflow_webhook():
-    # Parse the XML file
-    tree = ET.parse('xml/instructions.xml')
-    root = tree.getroot()
-
-    # Extract text from all "item" elements
-    items_text = [element.text for element in root.findall('.//item')]
-    instructions = '\n'.join(items_text)
-                    
-    # Create the template string with the extracted text
-    system_msg_template = SystemMessagePromptTemplate.from_template(template=f"""{instructions}'""")
-    human_msg_template = HumanMessagePromptTemplate.from_template(template="{input}")
-    prompt_template = ChatPromptTemplate.from_messages([system_msg_template, MessagesPlaceholder(variable_name="history"), human_msg_template])
-    conversation = ConversationChain(memory=conversation_memory, prompt=prompt_template, llm=llm, verbose=True)
-
-    # Request JSON from Dialogflow CX    
-    data = request.get_json()
-    print(json.dumps(data))
-    
     try:
+        data = request.get_json()
+        session_info = data['sessionInfo']['session']
+        sessionID = session_info.split('/')[-1]
+
+        # Parse the XML file
+        tree = ET.parse('xml/instructions.xml')
+        root = tree.getroot()
+        items_text = [element.text for element in root.findall('.//item')]
+        instructions = '\n'.join(items_text)
+
+        system_msg_template = SystemMessagePromptTemplate.from_template(template=f"""{instructions}'""")
+        human_msg_template = HumanMessagePromptTemplate.from_template(template="{input}")
+        prompt_template = ChatPromptTemplate.from_messages([system_msg_template, MessagesPlaceholder(variable_name="history"), human_msg_template])
+        conversation = ConversationChain(memory=conversation_memory, prompt=prompt_template, llm=llm, verbose=True)
+
         # Record the start time before processing the request
         start_time = datetime.now()
-        
-        session_info = data['sessionInfo']['session']  # Access the sessionInfo field
-        sessionID = session_info.split('/')[-1]
+
         query = str(data['text'])
+        userQuery = emoji.demojize(query)
         context = find_match(query)
         response = conversation.predict(input=f"Context:\n {context} \n\n Query:\n{query}")
         botMessage = emoji.demojize(response)
-        
-        print(context)
-        
+
         refined_query = query_refiner(context)
-        print(refined_query)
-        
+
         ph_time = pytz.timezone('Asia/Manila')
         timestamp = datetime.now(ph_time)
         response_time = (timestamp - timestamp).total_seconds()
-        
+
         # Record the end time after processing the request
         end_time = datetime.now()
         # Calculate response time in seconds
         response_time = (end_time - start_time).total_seconds()
-        
-        # Check if the MySQL connection is established
-        if mysql.connection is None:
-            raise Exception("MySQL connection is not established.")
-        
+
         # Create a cursor and execute the SQL query
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("INSERT INTO tblconversations (sessionID, incomingMessage, botMessage, responseTime, timestamp) VALUES (%s, %s, %s, %s, %s)", (sessionID, query, botMessage, response_time, timestamp))
+        cursor.execute("INSERT INTO tblconversations (sessionID, incomingMessage, botMessage, responseTime, timestamp) VALUES (%s, %s, %s, %s, %s)",
+                       (sessionID, userQuery, botMessage, response_time, timestamp))
         mysql.connection.commit()
         cursor.close()
-    
+
         response_json = jsonify(
             {
-            "fulfillmentResponse": {
-                "messages": [
-                    {
-                        "text": {
-                            "text": [response]
-                        }
-                    },
-                    {
-                        "payload": {
-                            "richContent": [
-                                [
-                                    {
-                                        "options": [
-                                            {
-                                                "text": [refined_query]
-                                            },
-                                        ],
-                                        "type": "chips"
-                                    }
-                                ]
-                            ],
+                "fulfillmentResponse": {
+                    "messages": [
+                        {
+                            "text": {
+                                "text": [response]
+                            }
                         },
-                        "payload":{
-                            "botcopy": [
-                                {
-                                "suggestions": [
-                                    {
-                                    "title": refined_query,
-                                    "action": {
-                                        "message": {
-                                        "command": refined_query,
-                                        "type": "training"
+                        {
+                            "payload": {
+                                "richContent": [
+                                    [
+                                        {
+                                            "options": [
+                                                {
+                                                    "text": [refined_query]
+                                                },
+                                            ],
+                                            "type": "chips"
                                         }
-                                    }
+                                    ]
+                                ],
+                            },
+                            "payload": {
+                                "botcopy": [
+                                    {
+                                        "suggestions": [
+                                            {
+                                                "title": refined_query,
+                                                "action": {
+                                                    "message": {
+                                                        "command": refined_query,
+                                                        "type": "training"
+                                                    }
+                                                }
+                                            }
+                                        ]
                                     }
                                 ]
-                                }
-                            ]
-                        } 
-                    }
-                ]
+                            }
+                        }
+                    ]
+                }
             }
-        }
         )
-        
+
         return response_json
-        
+
     except Exception as e:
         error_message = f"Error: {str(e)}"
-        print(error_message)  # Print the error message to the console
+        print(error_message)
         error_response = jsonify(
             {
                 'fulfillment_response': {
                     'messages': [
                         {
                             'text': {
-                                'text': "Sorry for the inconvenience. There's a problem with the server. Please try again later!"  # Include the error message in the response
+                                'text': "Sorry for the inconvenience. There's a problem with the server. Please try again later!"
                             }
                         }
                     ]
