@@ -47,8 +47,12 @@ from langchain.prompts import (
     MessagesPlaceholder,
 )
 from langchain.prompts import PromptTemplate
-
 from bs4 import BeautifulSoup
+
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
+
+from flask_mail import Mail, Message
 
 app = Flask(__name__,
             template_folder="templates",
@@ -57,12 +61,21 @@ app = Flask(__name__,
 
 app.secret_key = 'xyzsdfg'
 
-app.config['MYSQL_HOST'] = 'mysql-152093-0.cloudclusters.net'
-app.config['MYSQL_PORT'] = 19876
-app.config['MYSQL_USER'] = 'admin'
-app.config['MYSQL_PASSWORD'] = "hXtRVj9v"
-app.config['MYSQL_DB'] = 'redcms'
+app.config['MYSQL_HOST'] = "localhost"
+app.config['MYSQL_USER'] = "root"
+app.config['MYSQL_PASSWORD'] = ""
+app.config['MYSQL_DB'] = "redcms"
 app.config['MYSQL_AUTOCOMMIT'] = True
+
+app.config['SECRET_KEY'] = 'ahsuahedwgdjsdhsbds283'
+app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = 'responseandengagedirectly@gmail.com'
+app.config['MAIL_PASSWORD'] = 'ylmi ymrv acrr tksv'
+
+mail = Mail(app)
 
 mysql = MySQL(app)
 
@@ -71,6 +84,7 @@ app.register_blueprint(views)
 app.register_blueprint(utils)
 app.register_blueprint(fetchData)
 app.register_blueprint(report)
+
 
 load_dotenv()
 # Load environment variables
@@ -82,9 +96,13 @@ EMBEDDING_MODEL ="text-embedding-ada-002"
 
 # Initialize Pinecone
 pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENV)
-
 # Initialize the OpenAI Embeddings
 embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
+
+# MongoDB connection
+uri = "mongodb+srv://jonelnaquita:Admin12345@redcms.x009aew.mongodb.net/?retryWrites=true&w=majority"
+client = MongoClient(uri)
+db = client['redcms']
 
 @app.errorhandler(404)
 def page_not_found(error):
@@ -112,6 +130,20 @@ def home():
                    (visitor_ip, city, region, country, timestamp))
     mysql.connection.commit()
     cursor.close()
+    
+    #Save to MongoDB
+    collection = db["visitors"]
+    visitor_data = {
+        "visitorIP": visitor_ip,
+        "city": city,
+        "region": region,
+        "country": country,  # replace with the actual response time
+        "timestamp": timestamp
+    }
+
+    # Insert the conversation data into the collection
+    result = collection.insert_one(visitor_data)
+    
     return render_template('index.html')
 
 def check_password(password, hashed_password):
@@ -152,6 +184,42 @@ def login():
         return render_template('login.html', message=message)          
     return render_template('login.html', message=message)
 
+
+#Forgot Password Function
+
+@app.route("/send-email", methods=["GET"])
+def send_email():
+    email = request.args.get("email")
+
+    # Check if the email is registered in your database
+    if is_email_registered(email):
+        msg_title = "Reset Password"
+        sender = "noreply@app.com"
+        msg = Message(msg_title,sender=sender,recipients=[email])
+        msg_body = "To reset your password, click the reset button."
+        msg.body = ""
+        data = {
+            'app_name': "RESPONSE AND ENGAGE DIRECTLY",
+            'title': msg_title,
+            'body': msg_body,
+        }
+
+        msg.html = render_template("email.html",data=data)
+        
+        mail.send(msg)
+        return jsonify({"status": "success", "message": "Email sent successfully! Please check your email"})
+    else:
+        # Return an error message
+        return jsonify({"status": "error", "message": "Email not registered."})
+
+def is_email_registered(email):
+    # Connect to your MySQL database and check if the email exists
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute('SELECT * FROM tbluser WHERE email = %s', (email,))
+    user = cursor.fetchone()
+    cursor.close()
+
+    return user is not None
 
 @app.route('/dashboard')
 def dashboard():
@@ -212,7 +280,6 @@ def dashboard():
         
     except Exception as e:
         return jsonify({"error": str(e)})
-    
 
 @app.route('/manage')
 def managedatasource():
@@ -744,12 +811,25 @@ def dialogflow_webhook():
         # Calculate response time in seconds
         response_time = (end_time - start_time).total_seconds()
 
-        # Create a cursor and execute the SQL query
+        # Create a cursor and execute the SQL query 
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute("INSERT INTO tblconversations (sessionID, incomingMessage, botMessage, responseTime, timestamp) VALUES (%s, %s, %s, %s, %s)",
                        (sessionID, userQuery, botMessage, response_time, timestamp))
         mysql.connection.commit()
         cursor.close()
+        
+        #Save to MongoDB
+        collection = db["conversations"]
+        conversation_data = {
+            "sessionID": sessionID,
+            "userQuery": userQuery,
+            "botMessage": botMessage,
+            "response_time": response_time,  # replace with the actual response time
+            "timestamp": timestamp
+        }
+
+        # Insert the conversation data into the collection
+        result = collection.insert_one(conversation_data)
 
         response_json = jsonify(
             {
@@ -843,6 +923,18 @@ def dialogflow_ratings():
         cursor.execute("INSERT INTO tblratings (sessionID, rating, feedback, timestamp) VALUES (%s, %s, %s, %s)",
                        (sessionID, rating, feedback, timestamp))
         mysql.connection.commit()
+        
+        #Save to MongoDB
+        collection = db["ratings"]
+        ratings_data = {
+            "sessionID": sessionID,
+            "rating": rating,
+            "feedback": feedback,
+            "timestamp": timestamp
+        }
+
+        # Insert the conversation data into the collection
+        result = collection.insert_one(ratings_data)
     except Exception as e:
         # Handle any database-related errors here
         print("Database error:", str(e))

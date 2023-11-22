@@ -253,6 +253,7 @@
         success: function (response) {
           // Clear existing content
           $(".list-group").empty();
+          $(".ms-body").empty();  // Clear conversation content
 
           if (response.length === 0) {
             // Display a message when there's no available conversation
@@ -299,12 +300,13 @@
       type: "GET",
       url: "/fetch-conversation?sessionID=" + sessionID,
       success: function (conversation) {
-        var mesgs = document.querySelector(".ms-body-feed");
-        mesgs.innerHTML = "";
+        var mesgs = $(".ms-body");  // Corrected target class
+
+        mesgs.empty();  // Clear existing conversation content
 
         if (conversation.length === 0) {
           // Display a message when there's no available conversation
-          mesgs.innerHTML = '<p>No available conversation.</p>';
+          mesgs.html('<p>No available conversation.</p>');
           return;
         }
 
@@ -327,13 +329,12 @@
                 </div>
             </div>
             `;
-          mesgs.innerHTML += messageBody;
+          mesgs.append(messageBody);  // Append each message to the conversation content
         });
 
         // Unhighlight other items and highlight the clicked one
         $(".list-group-item").addClass("bg-light");
         $(`[data-session-id="${sessionID}"]`).removeClass("bg-light");
-
       },
       error: function (error) {
         console.error("Error fetching conversation:", error);
@@ -349,6 +350,8 @@
     fetchConversation(sessionID);
   });
 </script>
+
+
 
 
 

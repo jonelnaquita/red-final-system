@@ -79,8 +79,11 @@ def conversationLength():
 
 @views.route('/privacy-policy')
 def privacyPolicy():
-    if 'login' not in session or not session['login']:
-        # If 'login' session variable is not set or is False, redirect to login page
-        return redirect(url_for('login'))
-    
+
     return render_template('privacypolicy.html')
+
+@views.route('/forgot-password')
+def forgotPassword():
+
+    
+    return render_template('forgotpassword.html')

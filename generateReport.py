@@ -71,6 +71,8 @@ def generateEngagementLineReport():
     )
     
     config = pdfkit.configuration(wkhtmltopdf='C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe')
+    
+    date_today = datetime.now().strftime('%Y-%m-%d')
 
     # Configure PDF options
     pdf_options = {
@@ -85,7 +87,8 @@ def generateEngagementLineReport():
     # Create response with PDF
     response = make_response(pdf)
     response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = 'inline; filename=report.pdf'
+    filename = f"User_Engagement_Data_{date_today}.pdf"
+    response.headers['Content-Disposition'] = f'inline; filename={filename}'
 
     return response
 
