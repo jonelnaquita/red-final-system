@@ -85,5 +85,9 @@ def privacyPolicy():
 @views.route('/forgot-password')
 def forgotPassword():
 
+    return render_template('utils/forgotpassword.html')
+
+@views.route('/user-guidelines')
+def userGuidelines():
     
-    return render_template('forgotpassword.html')
+    return render_template('userguidelines.html')

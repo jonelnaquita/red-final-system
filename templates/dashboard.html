@@ -204,6 +204,7 @@
 </body>
 
 {% block scripts %}
+
 <script>
   // Fetch data from your Flask route
   $(document).ready(function () {
@@ -214,6 +215,9 @@
     fetchPercentageChange("#sitevisitors-percentage-change", "/fetch-visitor-change");
 
     function fetchPercentageChange(elementId, route) {
+      // Show loading text before making the AJAX request
+      $(elementId).text("Loading...");
+
       $.ajax({
         type: "GET",
         url: route,
@@ -231,6 +235,7 @@
     }
   });
 </script>
+
 
 
 
@@ -328,7 +333,6 @@
     });
   }
 
-  setInterval(fetchSessionSummary, 60000);
 </script>
 
 
@@ -468,8 +472,6 @@
     });
     document.getElementById('performance-line-legend').innerHTML = salesTop.generateLegend();
   }
-
-  setInterval(fetchPerformanceLineChart, 60000);
 </script>
 
 <script>
@@ -570,8 +572,6 @@
 
     document.getElementById('marketing-overview-legend').innerHTML = marketingOverview.generateLegend();
   }
-
-  setInterval(fetchPerformanceBarChart, 60000);
 </script>
 
 
@@ -657,7 +657,6 @@
         document.getElementById('doughnut-chart-legend').innerHTML = doughnutChart.generateLegend();
     }
 
-    setInterval(fetchRatingsData, 60000);
   </script>
 
 <script>

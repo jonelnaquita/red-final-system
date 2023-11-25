@@ -63,11 +63,10 @@ app = Flask(__name__,
 
 app.secret_key = 'xyzsdfg'
 
-app.config['MYSQL_HOST'] = "bteoc1hjrvxi0jsf8u2d-mysql.services.clever-cloud.com"
-app.config['MYSQL_USER'] = "u4ii1cazgwjra6qw"
-app.config['MYSQL_PORT'] = 3306
-app.config['MYSQL_PASSWORD'] = "M8iNilfIRKii1a2n4tL5"
-app.config['MYSQL_DB'] = "bteoc1hjrvxi0jsf8u2d"
+app.config['MYSQL_HOST'] = "localhost"
+app.config['MYSQL_USER'] = "root"
+app.config['MYSQL_PASSWORD'] = ""
+app.config['MYSQL_DB'] = "redcms"
 app.config['MYSQL_AUTOCOMMIT'] = True
 
 app.config['SECRET_KEY'] = 'ahsuahedwgdjsdhsbds283'
@@ -822,18 +821,6 @@ def query_refiner(conversation):
     )
     return response['choices'][0]['text']
 
-def userQuery_refiner(conversation, query):
-
-    response = openai.Completion.create(
-    model="gpt-3.5-turbo-instruct",
-    prompt=f"Given the following user query and conversation log, formulate a question that would be the most relevant to provide the user with an answer from a knowledge base.\n\nCONVERSATION LOG: \n{conversation}\n\nQuery: {query}\n\nRefined Query:",
-    temperature=0,
-    max_tokens=256,
-    top_p=1,
-    frequency_penalty=0,
-    presence_penalty=0
-    )
-    return response['choices'][0]['text']
 
 # Use the unique user identifier in conversations
 user_conversation_memories = {}
@@ -841,43 +828,18 @@ print(user_conversation_memories)
 
 # Function to set up the conversation with the user identifier
 def setup_conversation(session_id):
+    # Check if there's already a memory instance for this user
     if session_id not in user_conversation_memories:
+        # If not, create a new instance of ConversationBufferWindowMemory for this user
         user_conversation_memories[session_id] = ConversationBufferWindowMemory(k=3, return_messages=True)
     
+    # Retrieve the user's conversation memory
     conversation_memory = user_conversation_memories[session_id]
-
-# Use the unique user identifier in conversations
-user_conversation_memories = {}
-print(user_conversation_memories)
-
-# Function to set up the conversation with the user identifier
-def setup_conversation(session_id):
-    if session_id not in user_conversation_memories:
-        user_conversation_memories[session_id] = ConversationBufferWindowMemory(k=3, return_messages=True)
-
-    conversation_memory = user_conversation_memories[session_id]
-
-# Use a dictionary to store limited conversation history for each session
-MAX_HISTORY_ENTRIES = 2
-conversation_history = {}
-
-def get_conversation_string(session_id):
-    if session_id in conversation_history:
-        session_history = conversation_history[session_id]
-        conversation_string = "\n".join(session_history)
-        return conversation_string
-    return ""
+    
 
 @app.route('/dialogflow', methods=['POST'])
 def dialogflow_webhook():
     try:
-        
-        if 'responses' not in session:
-            session['responses'] = ["hi"]
-
-        if 'requests' not in session:
-            session['requests'] = []
-            
         data = request.get_json()
         session_info = data['sessionInfo']['session']
         sessionID = session_info.split('/')[-1]
@@ -901,33 +863,11 @@ def dialogflow_webhook():
 
         query = str(data['text'])
         postPrompt = str(query + " Don’t give me information not in your context.")
-
-        # Get conversation string before updating
-        conversation_string_before = get_conversation_string(sessionID)
-        print("Before:", conversation_string_before)
-        
-        refined_userQuery = userQuery_refiner(conversation_string_before, query)
-        
+        print(postPrompt)
         userQuery = emoji.demojize(query)
-        context = find_match(refined_userQuery)
+        context = find_match(query)
         response = conversation.predict(input=f"\nContext: \n{context}\n\nQuery: \n{postPrompt}")
         botMessage = emoji.demojize(response)
-        
-        #Append Request and Response to Conversation String
-        session['requests'].append(query)
-        session['responses'].append(response)
-        
-        # Update conversation history for the current session
-        current_history = conversation_history.get(sessionID, [])
-        current_history.append(f"Human: {query}")
-        current_history.append(f"Bot: {response}")
-
-        # Keep only the first two entries
-        conversation_history[sessionID] = current_history[-2:]
-
-        # Get conversation string after updating
-        conversation_string_after = get_conversation_string(sessionID)
-        print("After:", conversation_string_after)
 
         refined_query = query_refiner(context)
 
@@ -951,7 +891,7 @@ def dialogflow_webhook():
         collection = db["conversations"]
         conversation_data = {
             "sessionID": sessionID,
-            "userQuery": query,
+            "userQuery": userQuery,
             "botMessage": botMessage,
             "response_time": response_time,  # replace with the actual response time
             "timestamp": timestamp

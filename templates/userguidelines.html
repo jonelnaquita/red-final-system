@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	  <title>RED Chatbot</title>
+
+    <!-- plugins:css -->
+    <link rel="shortcut icon" href="static/assets/images/RED_Logo.png" />
+    <link rel="stylesheet" href="static/vendors/feather/feather.css">
+    <link rel="stylesheet" href="static/vendors/mdi/css/materialdesignicons.min.css">
+    <link rel="stylesheet" href="static/vendors/ti-icons/css/themify-icons.css">
+    <link rel="stylesheet" href="static/vendors/typicons/typicons.css">
+    <link rel="stylesheet" href="static/vendors/simple-line-icons/css/simple-line-icons.css">
+    <link rel="stylesheet" href="static/vendors/css/vendor.bundle.base.css">
+
+    <link rel="stylesheet" href="static/css/vertical-layout-light/style.css">
+    <!-- endinject -->
+    <link rel="stylesheet" href="static/css/custom/preloader.css">
+    <link rel="stylesheet" href="static/assets/css/userGuidelines.css">
+    <link rel="stylesheet" href="static/assets/fontawesome/js/all.js">
+
+    <!--Font Family-->
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+
+  
+</head>
+<body>
+    <div class="content-wrapper">
+        <section class="cards-section text-center">
+            <div class="container">
+                <h2 class="title">University Website Chatbot User Guidelines</h2>
+                <div class="intro">
+                    <p>Welcome to our University's website chatbot! This intelligent virtual assistant is designed to enhance your online experience by providing quick and helpful information. To ensure a smooth interaction, please familiarize yourself with the following guidelines:</p>
+                </div>
+                <div id="cards-wrapper" class="cards-wrapper row">
+                    <div class="item item-green col-lg-4 col-12">
+                        <div class="item-inner">
+                            <div class="icon-holder">
+                                <i class="mdi mdi-animation mdi-48px"></i>
+                            </div>
+                            <h3 class="title">Components</h3>
+                            <p class="intro">Our chatbot is equipped with various components to assist you effectively.</p>
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#componentsModal" data-whatever="@mdo">View</button>
+                        </div>
+                    </div>
+                    <div class="item item-pink item-2 col-lg-4 col-12">
+                        <div class="item-inner">
+                            <div class="icon-holder">
+                                <i class="mdi mdi-message-processing mdi-48px"></i>
+                            </div>
+                            <h3 class="title">Prompts</h3>
+                            <p class="intro">Feel free to ask about admission, services, and other general information. Use clear and concise questions for the best results</p>
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#promptsModal" data-whatever="@mdo">View</button>
+                        </div>
+                    </div>
+                    <div class="item item-blue col-lg-4 col-12">
+                        <div class="item-inner">
+                            <div class="icon-holder">
+                                <i class="mdi mdi-message-bulleted mdi-48px"></i>
+                            </div>
+                            <h3 class="title">Rating & Feedback</h3>
+                            <p class="intro">Share specific comments or suggestions to help us understand your experience better.</p>
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#ratingModal" data-whatever="@mdo">View</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+
+    <!--Components-->
+    <div class="modal fade" id="componentsModal" tabindex="-1" aria-labelledby="ModalLabel" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="ModalLabel">Chatbot Components</h5>
+              <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">×</span>
+              </button>
+            </div>
+            <div class="modal-body">
+                <div class="col-12">
+                    <div class="col-12 col-12">
+                        <h4>Chat Widget</h4>
+                    </div>
+                    <div class="col-12 col-12">
+                        <img src="static/images/screenshots/chat-widget.png" class="img-fluid" alt="Welcome Message">
+                    </div>
+                    <div class="col-12 col-12">
+                        <p>The chat widget, conveniently located on the website, will display prior suggestions related to the topics you might be interested in.</p>
+                    </div>
+                    <hr>
+                </div>
+                <div class="col-12">
+                    <div class="col-12 col-12">
+                        <h4>Privacy Policy</h4>
+                    </div>
+                    <div class="col-12 col-12">
+                        <img src="static/images/screenshots/privacy-policy.png" class="img-fluid" alt="Welcome Message">
+                    </div>
+                    <div class="col-12 col-12">
+                        <p>We take your privacy seriously. Before using the chatbot, please review our Privacy Policy to understand how your data is collected, used, and protected. Your interactions with the chatbot are governed by our commitment to safeguarding your information.</p>
+                    </div>
+                    <hr>
+                </div>
+                <div class="col-12">
+                    <div class="col-12 col-12">
+                        <h4>Header</h4>
+                    </div>
+                    <div class="col-12 col-12">
+                        <img src="static/images/screenshots/chatbot-header.png" class="img-fluid" alt="Welcome Message">
+                    </div>
+                    <div class="col-12 col-12">
+                        <p>At the top of the chat interface, you'll find the Chatbot Header with the following options:</p>
+                        <ul>
+                            <li>
+                                <strong>Fullscreen:</strong> Expand the chat window to fullscreen for a more immersive experience.
+                            </li>
+                            <li>
+                                <strong>Text-to-Speech:</strong> Enable or disable the text-to-speech feature for auditory assistance.
+                            </li>
+                            <li>
+                                <strong>Privacy Policy:</strong> Access our Privacy Policy to understand how your data is handled and protected.
+                            </li>
+                            <li>
+                                <strong>Clear History:</strong> Clear your chat history for privacy or a fresh start.
+                            </li>
+                        </ul>
+                    </div>
+                    <hr>
+                </div>
+                <div class="col-12">
+                    <div class="col-12 col-12">
+                        <h4>Greetings</h4>
+                    </div>
+                    <div class="col-12 col-12">
+                        <img src="static/images/screenshots/welcome-message.png" class="img-fluid" alt="Welcome Message">
+                    </div>
+                    <div class="col-12 col-12">
+                        <p>The chatbot will greet you and initiate the conversation. It will suggest frequently asked questions with predefined responses for quick assistance.</p>
+                    </div>
+                    <hr>
+                </div>
+                <div class="col-12">
+                    <div class="col-12 col-12">
+                        <h4>Input Message Options</h4>
+                    </div>
+                    <div class="col-12 col-12">
+                        <img src="static/images/screenshots/input-message.png" class="img-fluid" alt="Welcome Message">
+                    </div>
+                    <div class="col-12 col-12">
+                        <ul>
+                            <li>
+                                <strong>Typing:</strong> You can input your messages by typing in the chatbox. The chatbot will respond accordingly to your queries.
+                            </li>
+                            <li>
+                                <strong>Speech-to-Text:</strong> Alternatively, you can use the speech-to-text feature. Click the microphone icon in the chatbox, speak your question, and the chatbot will generate responses accordingly.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+              <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <!--Prompt -->
+    <div class="modal fade" id="promptsModal" tabindex="-1" aria-labelledby="ModalLabel" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="ModalLabel">Prompts</h5>
+              <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">×</span>
+              </button>
+            </div>
+            <div class="modal-body">
+                <div class="col-12">
+                    <div class="col-12 col-12">
+                        <h4>Simple Questions</h4>
+                    </div>
+                    <div class="col-12 col-12">
+                        <p>The chatbot excels at answering straightforward questions.</p>
+                        <ul>
+                            <li>
+                                <strong>Good:</strong> "What are the admission requirements in the Batangas State University?"
+                            </li>
+                            <li>
+                                <strong>Not ideal:</strong> "Can you tell me about the admission?"
+                            </li>
+                        </ul>
+                    </div>
+                    <hr>
+                </div>
+                <div class="col-12">
+                    <div class="col-12 col-12">
+                        <h4>Multiple Questions</h4>
+                    </div>
+                    <div class="col-12 col-12">
+                        <p>You can ask the chatbot multiple questions in a single interaction. It's designed to handle conversations and maintain context throughout the chat. However, if you have complex inquiries, consider breaking them down for better clarity.</p>
+                        <ul>
+                            <li>
+                                <strong>Good:</strong> "What are the admission requirements in the Batangas State University? Also, tell me about available scholarships."
+                            </li>
+                            <li>
+                                <strong>Not ideal:</strong> "Tell me everything about the university."
+                            </li>
+                        </ul>
+                    </div>
+                    <hr>
+                </div>
+            </div>
+            <div class="col-12 col-12">
+                <img src="static/images/screenshots/prompt-1.png" class="img-fluid" alt="Welcome Message">
+            </div>
+            
+            <div class="modal-footer">
+              <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <!--Ratings -->
+    <div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ModalLabel" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="ModalLabel">Rate Conversation</h5>
+              <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">×</span>
+              </button>
+            </div>
+            <div class="modal-body">
+                <div class="col-12">
+                    <div class="col-12 col-12">
+                        <h4>Rating and Feedback</h4>
+                    </div>
+                    <div class="col-12 col-12">
+                        <p>We value your feedback! After each interaction, you have the option to provide a rating and share your thoughts on the chatbot's performance. Your feedback helps us enhance the chatbot's capabilities and improve user satisfaction. If you are satisfied, you can simply express your gratitude by saying "thanks" or "thank you," and the rating and feedback options will appear.</p>
+                    </div>
+                    <hr>
+                </div>
+            </div>
+            <div class="col-12 col-12">
+                <img src="static/images/screenshots/ratinga.png" class="img-fluid" alt="Welcome Message">
+            </div>
+            
+            <div class="modal-footer">
+              <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+    </div>
+
+
+</body>
+<footer class="footer">
+    <div class="d-sm-flex justify-content-center justify-content-sm-between">
+        <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Response and Engage Directly</span>
+        <span class="float-none float-sm-right d-block mt-1 mt-sm-0 text-center">Copyright © 2023. All rights reserved.</span>
+    </div>
+</footer>
+</html>
+
+<script src="static/vendors/js/vendor.bundle.base.js"></script>
+<script src="static/vendors/js/bootstrap.min.js.map"></script>
+<script src="static/assets/js/animation.js"></script>
