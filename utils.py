@@ -11,6 +11,10 @@ import bcrypt
 import requests
 import os
 
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
+from pymongo import MongoClient
+
 utils = Blueprint("utils",
                 __name__,
                 template_folder="templates",
@@ -25,6 +29,11 @@ mysql = MySQLdb.connect(
         password="M8iNilfIRKii1a2n4tL5",
         db="bteoc1hjrvxi0jsf8u2d"
     )
+
+# MongoDB connection
+MONGODB_URI = os.getenv('MONGODB_URI')
+client = MongoClient(MONGODB_URI)
+db = client['redcms']
 
 @utils.route('/get-instructions', methods=['GET'])
 def get_instructions():

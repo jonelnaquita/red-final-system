@@ -479,7 +479,7 @@
     fetchPerformanceBarChart();
 
     function fetchPerformanceBarChart() {
-      fetch('/performance-barchart-data')
+      fetch('/performance-barchart-data-mongodb')
         .then(response => response.json())
         .then(data => {
             updateBarChart(data);

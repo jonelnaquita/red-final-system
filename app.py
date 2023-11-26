@@ -96,6 +96,7 @@ PINECONE_ENV = os.getenv('PINECONE_ENV')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 INDEX_NAME = os.getenv('INDEX_NAME')
 EMBEDDING_MODEL ="text-embedding-ada-002"
+MONGODB_URI = os.getenv('MONGODB_URI')
 
 # Initialize Pinecone
 pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENV)
@@ -103,8 +104,7 @@ pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENV)
 embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
 
 # MongoDB connection
-uri = "mongodb+srv://jonelnaquita:Admin12345@redcms.x009aew.mongodb.net/?retryWrites=true&w=majority"
-client = MongoClient(uri)
+client = MongoClient(MONGODB_URI)
 db = client['redcms']
 
 @app.errorhandler(404)
@@ -259,7 +259,7 @@ def change_user_password():
 
             # Update the user's password in the database
             cursor = mysql.connection.cursor()
-            cursor.execute('UPDATE tbluser SET password = %s, code = NULL WHERE code = %s', (password_hashed, reset_code))
+            cursor.execute('UPDATE tbluser SET password = %s, code = "" WHERE code = %s', (password_hashed, reset_code))
             mysql.connection.commit()
             cursor.close()
 
@@ -826,9 +826,9 @@ def userQuery_refiner(conversation, query):
 
     response = openai.Completion.create(
     model="gpt-3.5-turbo-instruct",
-    prompt=f"Given the following user query and conversation log, formulate a question that would be the most relevant to provide the user with an answer from a knowledge base.\n\nCONVERSATION LOG: \n{conversation}\n\nQuery: {query}\n\nRefined Query:",
+    prompt=f"Given the following user query and conversation log, formulate a question that would be the most relevant to provide the user with an answer from a knowledge base. If the query is not related, don't rephrase the query.\n\nCONVERSATION LOG: \n{conversation}\n\nQuery: {query}\n\nRefined Query:",
     temperature=0,
-    max_tokens=256,
+    max_tokens=50,
     top_p=1,
     frequency_penalty=0,
     presence_penalty=0
@@ -837,24 +837,12 @@ def userQuery_refiner(conversation, query):
 
 # Use the unique user identifier in conversations
 user_conversation_memories = {}
-print(user_conversation_memories)
 
 # Function to set up the conversation with the user identifier
 def setup_conversation(session_id):
     if session_id not in user_conversation_memories:
         user_conversation_memories[session_id] = ConversationBufferWindowMemory(k=3, return_messages=True)
     
-    conversation_memory = user_conversation_memories[session_id]
-
-# Use the unique user identifier in conversations
-user_conversation_memories = {}
-print(user_conversation_memories)
-
-# Function to set up the conversation with the user identifier
-def setup_conversation(session_id):
-    if session_id not in user_conversation_memories:
-        user_conversation_memories[session_id] = ConversationBufferWindowMemory(k=3, return_messages=True)
-
     conversation_memory = user_conversation_memories[session_id]
 
 # Use a dictionary to store limited conversation history for each session
@@ -907,10 +895,11 @@ def dialogflow_webhook():
         print("Before:", conversation_string_before)
         
         refined_userQuery = userQuery_refiner(conversation_string_before, query)
+        print("Refined Query: " + refined_userQuery)
         
         userQuery = emoji.demojize(query)
         context = find_match(refined_userQuery)
-        response = conversation.predict(input=f"\nContext: \n{context}\n\nQuery: \n{postPrompt}")
+        response = conversation.predict(input=f"\nContext: \n{context}\n\nQuery: \n{query}")
         botMessage = emoji.demojize(response)
         
         #Append Request and Response to Conversation String
