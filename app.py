@@ -125,7 +125,7 @@ def home():
     region = info.get('regionName')
     country = info.get('countryName')
     ph_time = pytz.timezone('Asia/Manila')
-    timestamp = datetime.now(ph_time)
+    timestamp = datetime.today()
 
     # Save location data to MySQL database
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -161,7 +161,7 @@ def hash_password(password):
 def login():
     # Check if the user is already logged in
     if 'login' in session and session['login']:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('fetchData.dashboard'))
 
     message = ''
     if request.method == 'POST' and 'email' in request.form and 'password' in request.form:
@@ -187,7 +187,66 @@ def login():
         return render_template('login.html', message=message)          
     return render_template('login.html', message=message)
 
+@app.route('/dashboard')
+def dashboard():
+    if 'login' not in session or not session['login']:
+        # If 'login' session variable is not set or is False, redirect to login page
+        return redirect(url_for('login'))
+    
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT COUNT(DISTINCT sessionID) AS session_count, COUNT(incomingMessage) AS inMessages, ROUND(AVG(responseTime), 2) AS avg_response_time FROM tblconversations")
+        data = cursor.fetchone()
+        
+        cursor.execute("SELECT COUNT(botMessage) AS botMessages FROM tblconversations WHERE botMessage != ''")
+        data2 = cursor.fetchone()
+        
+        #################################################################################################
+        # Get the current data
+        
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+                
+        #################################################################################################
+        
+        session_count = data['session_count']
+        inMessage_count = data['inMessages']
+        avg_response_time = data['avg_response_time']
+        botMessage_count = data2['botMessages']
+            
+        ############################### GET VISITOR DATA ################################################
+        
+        cursor.execute("SELECT COUNT(ip_address) AS visitor_number FROM tblvisitors")
+        visitors = cursor.fetchone()
+        visitor_count = visitors['visitor_number']
+        
+        # Fetch the visitor count for the day and month
+        current_date = datetime.now().strftime('%Y-%m-%d')
+        cursor.execute("SELECT COUNT(ip_address) AS visitor_number FROM tblvisitors WHERE date = %s", (current_date,))
+        today_visitors = cursor.fetchone()
 
+        cursor.execute("SELECT COUNT(ip_address) AS visitor_number FROM tblvisitors WHERE MONTH(date) = MONTH(CURDATE())")
+        monthly_visitors = cursor.fetchone()
+        
+        today_visitors = today_visitors['visitor_number']
+        monthly_visitors = monthly_visitors['visitor_number']
+        
+        
+        cursor.close()
+        
+        return render_template(
+            'dashboard.html',
+            session_count = session_count,
+            inMessage_count = inMessage_count,
+            botMessage_count = botMessage_count,
+            avg_response_time = avg_response_time,
+            visitor_count = visitor_count,
+            today_visitors = today_visitors,
+            monthly_visitors = monthly_visitors,
+        )
+        
+    except Exception as e:
+        return jsonify({"error": str(e)})
+    
 #Forgot Password Function
 
 @app.route("/send-email", methods=["GET"])
@@ -270,66 +329,6 @@ def change_user_password():
         # Handle other HTTP methods if needed
         return render_template('utils/changepassword.html')
 
-
-@app.route('/dashboard')
-def dashboard():
-    if 'login' not in session or not session['login']:
-        # If 'login' session variable is not set or is False, redirect to login page
-        return redirect(url_for('login'))
-    
-    try:
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("SELECT COUNT(DISTINCT sessionID) AS session_count, COUNT(incomingMessage) AS inMessages, ROUND(AVG(responseTime), 2) AS avg_response_time FROM tblconversations")
-        data = cursor.fetchone()
-        
-        cursor.execute("SELECT COUNT(botMessage) AS botMessages FROM tblconversations WHERE botMessage != ''")
-        data2 = cursor.fetchone()
-        
-        #################################################################################################
-        # Get the current data
-        
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-                
-        #################################################################################################
-        
-        session_count = data['session_count']
-        inMessage_count = data['inMessages']
-        avg_response_time = data['avg_response_time']
-        botMessage_count = data2['botMessages']
-            
-        ############################### GET VISITOR DATA ################################################
-        
-        cursor.execute("SELECT COUNT(ip_address) AS visitor_number FROM tblvisitors")
-        visitors = cursor.fetchone()
-        visitor_count = visitors['visitor_number']
-        
-        # Fetch the visitor count for the day and month
-        current_date = datetime.now().strftime('%Y-%m-%d')
-        cursor.execute("SELECT COUNT(ip_address) AS visitor_number FROM tblvisitors WHERE date = %s", (current_date,))
-        today_visitors = cursor.fetchone()
-
-        cursor.execute("SELECT COUNT(ip_address) AS visitor_number FROM tblvisitors WHERE MONTH(date) = MONTH(CURDATE())")
-        monthly_visitors = cursor.fetchone()
-        
-        today_visitors = today_visitors['visitor_number']
-        monthly_visitors = monthly_visitors['visitor_number']
-        
-        
-        cursor.close()
-        
-        return render_template(
-            'dashboard.html',
-            session_count = session_count,
-            inMessage_count = inMessage_count,
-            botMessage_count = botMessage_count,
-            avg_response_time = avg_response_time,
-            visitor_count = visitor_count,
-            today_visitors = today_visitors,
-            monthly_visitors = monthly_visitors,
-        )
-        
-    except Exception as e:
-        return jsonify({"error": str(e)})
 
 @app.route('/manage')
 def managedatasource():
@@ -841,7 +840,7 @@ user_conversation_memories = {}
 # Function to set up the conversation with the user identifier
 def setup_conversation(session_id):
     if session_id not in user_conversation_memories:
-        user_conversation_memories[session_id] = ConversationBufferWindowMemory(k=3, return_messages=True)
+        user_conversation_memories[session_id] = ConversationBufferWindowMemory(k=2, return_messages=True)
     
     conversation_memory = user_conversation_memories[session_id]
 
@@ -899,7 +898,7 @@ def dialogflow_webhook():
         
         userQuery = emoji.demojize(query)
         context = find_match(refined_userQuery)
-        response = conversation.predict(input=f"\nContext: \n{context}\n\nQuery: \n{query}")
+        response = conversation.predict(input=f"\nContext: \n{context}\n\nQuery: \n{postPrompt}")
         botMessage = emoji.demojize(response)
         
         #Append Request and Response to Conversation String
@@ -921,7 +920,7 @@ def dialogflow_webhook():
         refined_query = query_refiner(context)
 
         ph_time = pytz.timezone('Asia/Manila')
-        timestamp = datetime.now(ph_time)
+        timestamp = datetime.today()
         response_time = (timestamp - timestamp).total_seconds()
 
         # Record the end time after processing the request

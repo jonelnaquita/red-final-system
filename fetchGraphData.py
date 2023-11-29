@@ -51,7 +51,15 @@ def fetch_session_change():
 
     percentage_change = ((this_week_sessions - last_week_sessions) / last_week_sessions) * 100
 
-    response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
+    # Count the number of added sessions from last week
+    added_sessions = this_week_sessions - last_week_sessions
+
+    # Prepare the response
+    response = {
+        'percentage_change': round(percentage_change, 1),  # Round to one decimal place
+        'added_sessions_last_week': added_sessions
+    }
+
     return jsonify(response)
 
 
@@ -83,11 +91,12 @@ def fetch_visitor_change():
     this_week_visitor = this_week_data["visitor_number"]
 
     percentage_change = ((this_week_visitor - last_week_visitor) / last_week_visitor) * 100
+    added_visitors = this_week_visitor - last_week_visitor
 
-    response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
+    response = {'percentage_change': round(percentage_change, 1),
+                'added_visitors': added_visitors
+                }
     return jsonify(response)
-
-
 
 
 @fetchData.route("/fetch-inmessages-change", methods=["GET"])
@@ -125,8 +134,12 @@ def fetch_inmessages_change():
             percentage_change = float('inf')  # Positive infinity for no messages last week
         else:
             percentage_change = ((this_week_inmessages - last_week_inmessages) / last_week_inmessages) * 100
-
-        response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
+            
+        added_inmessages = this_week_inmessages - last_week_inmessages
+    
+        response = {'percentage_change': round(percentage_change, 1),
+                    'added_inmessages': added_inmessages
+                    }
 
     return jsonify(response)
 
@@ -158,8 +171,10 @@ def fetch_botresponse_change():
     this_week_botresponses = this_week_data["botresponses"]
 
     percentage_change = ((this_week_botresponses - last_week_botresponses) / last_week_botresponses) * 100
+    added_botresponse = this_week_botresponses - last_week_botresponses
 
-    response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
+    response = {'percentage_change': round(percentage_change, 1),
+                'added_botresponse': added_botresponse}  # Round to one decimal place
     return jsonify(response)
 
 
@@ -185,23 +200,23 @@ def fetch_averageresponse_change():
 
     cursor.close()
 
-    # Check if the result is None
-    if last_week_data is None or this_week_data is None:
-        response = {'percentage_change': None}  # Handle the case when data is not available
+    # Set default values in case the result is None
+    last_week_averageresponse = last_week_data["averageresponse"] if last_week_data and last_week_data["averageresponse"] else 0
+    this_week_averageresponse = this_week_data["averageresponse"] if this_week_data and this_week_data["averageresponse"] else 0
+
+    # Calculate the percentage change
+    if last_week_averageresponse == 0:
+        percentage_change = float('inf')  # Positive infinity for no average response last week
     else:
-        # Calculate the percentage change
-        last_week_averageresponse = last_week_data["averageresponse"]
-        this_week_averageresponse = this_week_data["averageresponse"]
+        percentage_change = ((this_week_averageresponse - last_week_averageresponse) / last_week_averageresponse) * 100
 
-        # Avoid division by zero
-        if last_week_averageresponse == 0:
-            percentage_change = float('inf')  # Positive infinity for no average response last week
-        else:
-            percentage_change = ((this_week_averageresponse - last_week_averageresponse) / last_week_averageresponse) * 100
+    added_response = this_week_averageresponse - last_week_averageresponse
 
-        response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
+    response = {'percentage_change': round(percentage_change, 1),
+                'added_response': added_response}
 
     return jsonify(response)
+
 
 
 

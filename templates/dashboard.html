@@ -15,28 +15,28 @@
                                 <div class="statistics-details d-flex align-items-center justify-content-between">
                                     <div>
                                       <p class="statistics-title">Sessions</p>
-                                      <h3 class="rate-percentage" id="session-count"></h3>
-                                      <p class="text-danger d-flex"><i class="mdi"></i><span id="session-percentage-change">Loading...</span></p>
+                                      <h3 id="session-count"></h3>
+                                      <p class="text-danger d-flex" id="session-percentage"><i class="mdi"></i><span id="session-percentage-change">Loading...</span></p>
                                     </div>
                                     <div>
                                       <p class="statistics-title">Bot Responses</p>
-                                      <h3 class="rate-percentage" id="bot-response-count"></h3>
-                                      <p class="text-danger d-flex"><i class="mdi"></i><span id="botresponse-percentage-change">Loading...</span></p>
+                                      <h3 id="bot-response-count"></h3>
+                                      <p class="text-danger d-flex" id="botresponse-percentage"><i class="mdi"></i><span id="botresponse-percentage-change">Loading...</span></p>
                                     </div>
                                     <div>
                                       <p class="statistics-title">In Messages</p>
-                                      <h3 class="rate-percentage" id="in-message-count"></h3>
-                                      <p class="text-danger d-flex"><i class="mdi"></i><span id="inmessages-percentage-change">Loading...</span></p>
+                                      <h3 id="in-message-count"></h3>
+                                      <p class="text-danger d-flex" id="inmessages-percentage"><i class="mdi"></i><span id="inmessages-percentage-change">Loading...</span></p>
                                     </div>
                                     <div>
                                       <p class="statistics-title">Average Response Time</p>
-                                      <h3 class="rate-percentage" id="avg-response-time"></h3>
-                                      <p class="text-danger d-flex"><i class="mdi"></i><span id="averageresponse-percentage-change">Loading...</span></p>
+                                      <h3 id="avg-response-time"></h3>
+                                      <p class="text-danger d-flex" id="averageresponse-percentage"><i class="mdi"></i><span id="averageresponse-percentage-change">Loading...</span></p>
                                     </div>
                                     <div>
                                       <p class="statistics-title">Site Visitors</p>
-                                      <h3 class="rate-percentage" id="count-visitors"></h3>
-                                      <p class="text-danger d-flex"><i class="mdi"></i><span id="sitevisitors-percentage-change">Loading...</span></p>
+                                      <h3 id="count-visitors"></h3>
+                                      <p class="text-danger d-flex" id="sitevisitors-percentage"><i class="mdi"></i><span id="sitevisitors-percentage-change">Loading...</span></p>
                                     </div>
                                 </div>
                             </div>
@@ -111,7 +111,7 @@
                                               </div>
                                               <div>
                                                   <p class="text-small mb-2">Total Visitors</p>
-                                                  <h4 class="mb-0 fw-bold">{{ monthly_visitors }}</h4> <!-- Display monthly visitors count -->
+                                                  <h4 class="mb-0 fw-bold" id="monthly-visitors"></h4> <!-- Display monthly visitors count -->
                                               </div>
                                           </div>
                                       </div>
@@ -125,7 +125,7 @@
                                               </div>
                                               <div>
                                                   <p class="text-small mb-2">Visits Today</p>
-                                                  <h4 class="mb-0 fw-bold">{{ today_visitors }}</h4> <!-- Display daily visitors count -->
+                                                  <h4 class="mb-0 fw-bold" id="today-visitors"></h4> <!-- Display daily visitors count -->
                                               </div>
                                           </div>
                                       </div>
@@ -148,13 +148,6 @@
                                           <p class="card-subtitle card-subtitle-dash">RED Engagement Per Month</p>
                                         </div>
                                         <div>
-                                          <div class="dropdown">
-                                            <button class="btn btn-light dropdown-toggle toggle-dark btn-lg mb-0 me-0" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="icon-download"></i> Export </button>
-                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
-                                              <a class="dropdown-item" href="#">PDF</a>
-                                              <a class="dropdown-item" href="#">CSV</a>
-                                            </div>
-                                          </div>
                                         </div>
                                       </div>
                                       <div class="d-sm-flex align-items-center mt-1 justify-content-between">
@@ -236,8 +229,102 @@
   });
 </script>
 
+<script>
+  $(document).ready(function() {
+      // Fetch session change data from the server
+      $.get('/fetch-session-change', function(data) {
+          var percentageChange = data.percentage_change;
+  
+          // Check if the percentage change is less than 0
+          if (percentageChange < 0) {
+              $('#session-percentage').attr("title", "Down " + Math.abs(percentageChange) + "% from the previous week value of: " + data.added_sessions_last_week);
+          } else {
+              $('#session-percentage').attr("title", "Up " + percentageChange + "% from the previous week value of: " + data.added_sessions_last_week);
+          }
+      });
+  });
+</script>
 
+<script>
+  $(document).ready(function() {
+      // Fetch session change data from the server
+      $.get('/fetch-visitor-change', function(data) {
+          var percentageChange = data.percentage_change;
+  
+          // Check if the percentage change is less than 0
+          if (percentageChange < 0) {
+              $('#sitevisitors-percentage').attr("title", "Down " + Math.abs(percentageChange) + "% from the previous week value of: " + data.added_visitors);
+          } else {
+              $('#sitevisitors-percentage').attr("title", "Up " + percentageChange + "% from the previous week value of: " + data.added_visitors);
+          }
+      });
+  });
+</script>
 
+<script>
+  $(document).ready(function() {
+      // Fetch session change data from the server
+      $.get('/fetch-inmessages-change', function(data) {
+          var percentageChange = data.percentage_change;
+  
+          // Check if the percentage change is less than 0
+          if (percentageChange < 0) {
+              $('#inmessages-percentage').attr("title", "Down " + Math.abs(percentageChange) + "% from the previous week value of: " + data.added_inmessages);
+          } else {
+              $('#inmessages-percentage').attr("title", "Up " + percentageChange + "% from the previous week value of: " + data.added_inmessages);
+          }
+      });
+  });
+</script>
+
+<script>
+  $(document).ready(function() {
+      // Fetch session change data from the server
+      $.get('/fetch-botresponse-change', function(data) {
+          var percentageChange = data.percentage_change;
+  
+          // Check if the percentage change is less than 0
+          if (percentageChange < 0) {
+              $('#botresponse-percentage').attr("title", "Down " + Math.abs(percentageChange) + "% from the previous week value of: " + data.added_botresponse);
+          } else {
+              $('#botresponse-percentage').attr("title", "Up " + percentageChange + "% from the previous week value of: " + data.added_botresponse);
+          }
+      });
+  });
+</script>
+
+<script>
+  $(document).ready(function() {
+      // Fetch session change data from the server
+      $.get('/fetch-botresponse-change', function(data) {
+          var percentageChange = data.percentage_change;
+  
+          // Check if the percentage change is less than 0
+          if (percentageChange < 0) {
+              $('#botresponse-percentage').attr("title", "Down " + Math.abs(percentageChange) + "% from the previous week value of: " + data.added_botresponse);
+          } else {
+              $('#botresponse-percentage').attr("title", "Up " + percentageChange + "% from the previous week value of: " + data.added_botresponse);
+          }
+      });
+  });
+</script>
+
+<script>
+  $(document).ready(function() {
+      // Fetch session change data from the server
+      $.get('/fetch-averageresponse-change', function(data) {
+          var percentageChange = data.percentage_change;
+  
+          // Check if the percentage change is less than 0
+          if (percentageChange < 0) {
+              $('#averageresponse-percentage').attr("title", "Down " + Math.abs(percentageChange) + "% from the previous week value of: " + data.added_response);
+          } else {
+              $('#averageresponse-percentage').attr("title", "Up " + percentageChange + "% from the previous week value of: " + data.added_response);
+          }
+      });
+  });
+</script>
+  
 
 <script>
   $(document).ready(function() {
@@ -343,12 +430,16 @@
   const botResponseCount = {{ botMessage_count }};
   const avgResponseTime = {{ avg_response_time }};
   const countVisitors = {{ visitor_count }};
+  const todayVisitors = {{ today_visitors }};
+  const monthlyVisitors = {{ monthly_visitors }};
 
   $('#session-count').text(sessionCount);
   $('#in-message-count').text(inMessageCount);
   $('#bot-response-count').text(botResponseCount);
   $('#avg-response-time').text(avgResponseTime).append(" seconds");
   $('#count-visitors').text(countVisitors);
+  $('#today-visitors').text(todayVisitors);
+  $('#monthly-visitors').text(monthlyVisitors);
 </script>
 
 <script>
@@ -479,7 +570,7 @@
     fetchPerformanceBarChart();
 
     function fetchPerformanceBarChart() {
-      fetch('/performance-barchart-data-mongodb')
+      fetch('/performance-barchart-data')
         .then(response => response.json())
         .then(data => {
             updateBarChart(data);

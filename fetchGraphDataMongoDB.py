@@ -25,195 +25,273 @@ fetchData = Blueprint("fetchData",
 #SessionID Increase/Decrease
 @fetchData.route("/fetch-session-change", methods=["GET"])
 def fetch_session_change():
-    # Calculate date ranges for this week and last week
-    today = datetime.now().date()
-    last_week_start = today - timedelta(days=today.weekday() + 7)
-    last_week_end = last_week_start + timedelta(days=6)
+    try:
+        # Calculate date ranges for this week and last week
+        today = datetime.today()
+        
+        this_week_start = today - timedelta(days=(today.weekday() + 1) % 7)
+        this_week_end = this_week_start + timedelta(days=6)
 
-    this_week_start = today - timedelta(days=today.weekday())
-    this_week_end = today
+        # Calculate the start and end dates for the previous week
+        last_week_start = this_week_start - timedelta(days=7)
+        last_week_end = last_week_start + timedelta(days=6)
 
-    # Query to count the number of sessions for last week and this week
-    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT COUNT(DISTINCT sessionID) AS sessions FROM tblconversations WHERE DATE(timestamp) BETWEEN %s AND %s",
-                   (last_week_start, last_week_end))
-    last_week_data = cursor.fetchone()
+        # Query unique sessions for last week and this week based on sessionID
+        last_week_sessions = len(set(db["conversations"].distinct("sessionID", {
+            "timestamp": {"$gte": last_week_start, "$lte": last_week_end}
+        })))
 
-    cursor.execute("SELECT COUNT(DISTINCT sessionID) AS sessions FROM tblconversations WHERE DATE(timestamp) BETWEEN %s AND %s",
-                   (this_week_start, this_week_end))
-    this_week_data = cursor.fetchone()
+        this_week_sessions = len(set(db["conversations"].distinct("sessionID", {
+            "timestamp": {"$gte": this_week_start, "$lte": this_week_end}
+        })))
 
-    cursor.close()
+        # Calculate the percentage change
+        percentage_change = ((this_week_sessions - last_week_sessions) / last_week_sessions) * 100 if last_week_sessions != 0 else 100
 
-    # Calculate the percentage change
-    last_week_sessions = last_week_data["sessions"]
-    this_week_sessions = this_week_data["sessions"]
+        # Count the number of added sessions from last week
+        added_sessions = this_week_sessions - last_week_sessions
 
-    percentage_change = ((this_week_sessions - last_week_sessions) / last_week_sessions) * 100
+        # Prepare the response
+        response = {
+            'percentage_change': round(percentage_change, 1),  # Round to one decimal place
+            'added_sessions_last_week': added_sessions
+        }
 
-    response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
-    return jsonify(response)
+        return jsonify(response)
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
 #Visitor Increase/Decrease
 @fetchData.route("/fetch-visitor-change", methods=["GET"])
 def fetch_visitor_change():
-    # Calculate date ranges for this week and last week
-    today = datetime.now().date()
-    last_week_start = today - timedelta(days=today.weekday() + 7)
-    last_week_end = last_week_start + timedelta(days=6)
+    try:
+        # Calculate date ranges for this week and last week
+        today = datetime.today()
+        this_week_start = today - timedelta(days=(today.weekday() + 1) % 7)
+        this_week_end = this_week_start + timedelta(days=6)
 
-    this_week_start = today - timedelta(days=today.weekday())
-    this_week_end = today
+        # Calculate the start and end dates for the previous week
+        last_week_start = this_week_start - timedelta(days=7)
+        last_week_end = last_week_start + timedelta(days=6)
 
-    # Query to count the number of sessions for last week and this week
-    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT COUNT(ip_address) AS visitor_number FROM tblvisitors WHERE DATE(date) BETWEEN %s AND %s",
-                   (last_week_start, last_week_end))
-    last_week_data = cursor.fetchone()
+        # Query unique visitors for last week and this week based on IP address
+        last_week_visitors = len(set(db["visitors"].distinct("visitorIP", {
+            "timestamp": {"$gte": last_week_start, "$lte": last_week_end}
+        })))
 
-    cursor.execute("SELECT COUNT(ip_address) AS visitor_number FROM tblvisitors WHERE DATE(date) BETWEEN %s AND %s",
-                   (this_week_start, this_week_end))
-    this_week_data = cursor.fetchone()
+        this_week_visitors = len(set(db["visitors"].distinct("visitorIP", {
+            "timestamp": {"$gte": this_week_start, "$lte": this_week_end}
+        })))
 
-    cursor.close()
+        # Calculate the percentage change
+        percentage_change = ((this_week_visitors - last_week_visitors) / last_week_visitors) * 100
 
-    # Calculate the percentage change
-    last_week_visitor = last_week_data["visitor_number"]
-    this_week_visitor = this_week_data["visitor_number"]
+        # Count the number of added visitors from last week
+        added_visitors = this_week_visitors - last_week_visitors
 
-    percentage_change = ((this_week_visitor - last_week_visitor) / last_week_visitor) * 100
+        # Prepare the response
+        response = {
+            'percentage_change': round(percentage_change, 1),  # Round to one decimal place
+            'added_visitors': added_visitors
+        }
 
-    response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
-    return jsonify(response)
+        return jsonify(response)
 
-
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
 @fetchData.route("/fetch-inmessages-change", methods=["GET"])
 def fetch_inmessages_change():
-    # Calculate date ranges for this week and last week
-    today = datetime.now().date()
-    last_week_start = today - timedelta(days=today.weekday() + 7)
-    last_week_end = last_week_start + timedelta(days=6)
+    try:
+        # Calculate date ranges for this week and last week
+        today = datetime.today()
+        this_week_start = today - timedelta(days=(today.weekday() + 1) % 7)
+        this_week_end = this_week_start + timedelta(days=6)
 
-    this_week_start = today - timedelta(days=today.weekday())
-    this_week_end = today
+        # Calculate the start and end dates for the previous week
+        last_week_start = this_week_start - timedelta(days=7)
+        last_week_end = last_week_start + timedelta(days=6)
 
-    # Query to count the number of incoming messages for last week and this week
-    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT COUNT(incomingMessage) AS inmessages FROM tblconversations WHERE DATE(timestamp) BETWEEN %s AND %s",
-                   (last_week_start, last_week_end))
-    last_week_data = cursor.fetchone()
+        # Query to count the number of incoming messages for last week and this week
+        last_week_inmessages = db["conversations"].count_documents({
+            "timestamp": {"$gte": last_week_start, "$lte": last_week_end}
+        })
 
-    cursor.execute("SELECT COUNT(incomingMessage) AS inmessages FROM tblconversations WHERE DATE(timestamp) BETWEEN %s AND %s",
-                   (this_week_start, this_week_end))
-    this_week_data = cursor.fetchone()
+        this_week_inmessages = db["conversations"].count_documents({
+            "timestamp": {"$gte": this_week_start, "$lte": this_week_end}
+        })
 
-    cursor.close()
-
-    # Check if the result is None
-    if last_week_data is None or this_week_data is None:
-        response = {'percentage_change': None}  # Handle the case when data is not available
-    else:
         # Calculate the percentage change
-        last_week_inmessages = last_week_data["inmessages"]
-        this_week_inmessages = this_week_data["inmessages"]
+        percentage_change = ((this_week_inmessages - last_week_inmessages) / last_week_inmessages) * 100 if last_week_inmessages != 0 else 100
 
-        # Avoid division by zero
-        if last_week_inmessages == 0:
-            percentage_change = float('inf')  # Positive infinity for no messages last week
-        else:
-            percentage_change = ((this_week_inmessages - last_week_inmessages) / last_week_inmessages) * 100
+        # Count the number of added incoming messages from last week
+        added_inmessages = this_week_inmessages - last_week_inmessages
 
-        response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
+        # Prepare the response
+        response = {
+            'percentage_change': round(percentage_change, 1),  # Round to one decimal place
+            'added_inmessages': added_inmessages
+        }
 
-    return jsonify(response)
+        return jsonify(response)
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
 @fetchData.route("/fetch-botresponse-change", methods=["GET"])
 def fetch_botresponse_change():
-    # Calculate date ranges for this week and last week
-    today = datetime.now().date()
-    last_week_start = today - timedelta(days=today.weekday() + 7)
-    last_week_end = last_week_start + timedelta(days=6)
+    try:
+        # Calculate date ranges for this week and last week
+        today = datetime.today()
+        this_week_start = today - timedelta(days=(today.weekday() + 1) % 7)
+        this_week_end = this_week_start + timedelta(days=6)
 
-    this_week_start = today - timedelta(days=today.weekday())
-    this_week_end = today
+        # Calculate the start and end dates for the previous week
+        last_week_start = this_week_start - timedelta(days=7)
+        last_week_end = last_week_start + timedelta(days=6)
 
-    # Query to count the number of bot responses for last week and this week
-    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT COUNT(botMessage) AS botresponses FROM tblconversations WHERE DATE(timestamp) BETWEEN %s AND %s",
-                   (last_week_start, last_week_end))
-    last_week_data = cursor.fetchone()
+        # Query to count the number of bot responses for last week and this week
+        last_week_botresponses = db["conversations"].count_documents({
+            "timestamp": {"$gte": last_week_start, "$lte": last_week_end},
+            "botMessage": {"$exists": True}
+        })
 
-    cursor.execute("SELECT COUNT(botMessage) AS botresponses FROM tblconversations WHERE DATE(timestamp) BETWEEN %s AND %s",
-                   (this_week_start, this_week_end))
-    this_week_data = cursor.fetchone()
+        this_week_botresponses = db["conversations"].count_documents({
+            "timestamp": {"$gte": this_week_start, "$lte": this_week_end},
+            "botMessage": {"$exists": True}
+        })
 
-    cursor.close()
+        # Calculate the percentage change
+        percentage_change = ((this_week_botresponses - last_week_botresponses) / last_week_botresponses) * 100 if last_week_botresponses != 0 else 100
 
-    # Calculate the percentage change
-    last_week_botresponses = last_week_data["botresponses"]
-    this_week_botresponses = this_week_data["botresponses"]
+        # Count the number of added bot responses from last week
+        added_botresponse = this_week_botresponses - last_week_botresponses
 
-    percentage_change = ((this_week_botresponses - last_week_botresponses) / last_week_botresponses) * 100
+        # Prepare the response
+        response = {
+            'percentage_change': round(percentage_change, 1),  # Round to one decimal place
+            'added_botresponse': added_botresponse
+        }
 
-    response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
-    return jsonify(response)
+        return jsonify(response)
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
 @fetchData.route("/fetch-averageresponse-change", methods=["GET"])
 def fetch_averageresponse_change():
-    # Calculate date ranges for this week and last week
-    today = datetime.now().date()
-    last_week_start = today - timedelta(days=today.weekday() + 7)
-    last_week_end = last_week_start + timedelta(days=6)
+    try:
+        # Calculate date ranges for this week and last week
+        today = datetime.today()
+        this_week_start = today - timedelta(days=(today.weekday() + 1) % 7)
+        this_week_end = this_week_start + timedelta(days=6)
 
-    this_week_start = today - timedelta(days=today.weekday())
-    this_week_end = today
+        # Calculate the start and end dates for the previous week
+        last_week_start = this_week_start - timedelta(days=7)
+        last_week_end = last_week_start + timedelta(days=6)
 
-    # Query to calculate average response time for last week and this week
-    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT AVG(responseTime) AS averageresponse FROM tblconversations WHERE DATE(timestamp) BETWEEN %s AND %s",
-                   (last_week_start, last_week_end))
-    last_week_data = cursor.fetchone()
+        # Query to calculate average response time for last week
+        last_week_aggregate = db["conversations"].aggregate([
+            {"$match": {"timestamp": {"$gte": last_week_start, "$lte": last_week_end}}},
+            {"$group": {"_id": None, "average_response": {"$avg": "$response_time"}}}
+        ])
 
-    cursor.execute("SELECT AVG(responseTime) AS averageresponse FROM tblconversations WHERE DATE(timestamp) BETWEEN %s AND %s",
-                   (this_week_start, this_week_end))
-    this_week_data = cursor.fetchone()
+        # Query to calculate average response time for this week
+        this_week_aggregate = db["conversations"].aggregate([
+            {"$match": {"timestamp": {"$gte": this_week_start, "$lte": this_week_end}}},
+            {"$group": {"_id": None, "average_response": {"$avg": "$response_time"}}}
+        ])
 
-    cursor.close()
+        # Extract average response time from aggregation result
+        last_week_averageresponse = next(last_week_aggregate, {}).get("average_response", 0)
+        this_week_averageresponse = next(this_week_aggregate, {}).get("average_response", 0)
 
-    # Check if the result is None
-    if last_week_data is None or this_week_data is None:
-        response = {'percentage_change': None}  # Handle the case when data is not available
-    else:
         # Calculate the percentage change
-        last_week_averageresponse = last_week_data["averageresponse"]
-        this_week_averageresponse = this_week_data["averageresponse"]
-
-        # Avoid division by zero
         if last_week_averageresponse == 0:
             percentage_change = float('inf')  # Positive infinity for no average response last week
         else:
             percentage_change = ((this_week_averageresponse - last_week_averageresponse) / last_week_averageresponse) * 100
 
-        response = {'percentage_change': round(percentage_change, 1)}  # Round to one decimal place
+        added_response = round(this_week_averageresponse - last_week_averageresponse, 2)
 
-    return jsonify(response)
+        response = {'percentage_change': round(percentage_change, 1),
+                    'added_response': added_response}
 
+        return jsonify(response)
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
 #################### DASHBOARD DATA ##########################
+conversations_collection = db["conversations"]
+visitors_collection = db["visitors"]
+
+@fetchData.route('/dashboard')
+def dashboard():
+    if 'login' not in session or not session['login']:
+        # If 'login' session variable is not set or is False, redirect to login page
+        return redirect(url_for('login'))
+
+    try:
+        # Get conversation data
+        sessionIDCount = conversations_collection.aggregate([
+            {"$group": {"_id": "$sessionID"}}
+        ])
+        
+        conversation_data = conversations_collection.aggregate([
+            {"$group": {"_id": None, 
+                        "inMessages_count": {"$sum": {"$cond": {"if": {"$ne": ["$userQuery", ""]}, "then": 1, "else": 0}}},
+                        "avg_response_time": {"$avg": "$response_time"},
+                        "botMessages_count": {"$sum": {"$cond": {"if": {"$ne": ["$botMessage", ""]}, "then": 1, "else": 0}}}
+                        }
+            }
+        ])
+        
+        session_count = len(list(sessionIDCount))
+        data = next(conversation_data, {})
+        inMessage_count = data.get('inMessages_count', 0)
+        avg_response_time = round(data.get('avg_response_time', 0), 2)
+        botMessage_count = data.get('botMessages_count', 0)
+
+        # Get visitor data
+        visitor_count = len(visitors_collection.distinct("visitorIP"))
+
+        # Fetch the visitor count for the day and month
+
+        current_date = datetime.now().strftime('%Y-%m-%d')
+        today_visitors = len(visitors_collection.distinct("visitorIP", {"timestamp": {"$regex": f"^{current_date}"}}))
+
+        monthly_visitors = len(visitors_collection.distinct("visitorIP", {"timestamp": {"$regex": f"^{datetime.now().replace(day=1).strftime('%Y-%m-%d')}"}}))
+
+
+        return render_template(
+            'dashboard.html',
+            session_count=session_count,
+            inMessage_count=inMessage_count,
+            botMessage_count=botMessage_count,
+            avg_response_time=avg_response_time,
+            visitor_count=visitor_count,
+            today_visitors=today_visitors,
+            monthly_visitors=monthly_visitors,
+        )
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
+collection = db["conversations"]
 
 @fetchData.route('/performance-linechart-data', methods=['GET'])
 def get_performance_linechart_data():
     try:
-        # Get the current date
-        ph_time = pytz.timezone('Asia/Manila')
-        today = datetime.now(ph_time)
-        
+        today = datetime.today()
+
         # Calculate the start and end dates for the current week (Monday to Sunday)
         start_of_week = today - timedelta(days=(today.weekday() + 1) % 7)
         end_of_week = start_of_week + timedelta(days=6)
@@ -221,93 +299,51 @@ def get_performance_linechart_data():
         # Calculate the start and end dates for the previous week
         start_of_last_week = start_of_week - timedelta(days=7)
         end_of_last_week = start_of_last_week + timedelta(days=6)
-        
-        cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
-        
-        # Query data for the current week
-        query_current_week = (
-            "SELECT DAYNAME(timestamp) AS day, COUNT(DISTINCT sessionID) AS session_count "
-            "FROM tblconversations "
-            "WHERE DATE(timestamp) BETWEEN %s AND %s "
-            "GROUP BY day"
-        )
-        cursor.execute(query_current_week, (start_of_week, end_of_week))
-        current_week_data = cursor.fetchall()
 
-        # Query data for the previous week
-        query_last_week = (
-            "SELECT DAYNAME(timestamp) AS day, COUNT(DISTINCT sessionID) AS session_count "
-            "FROM tblconversations "
-            "WHERE DATE(timestamp) BETWEEN %s AND %s "
-            "GROUP BY day"
-        )
-        cursor.execute(query_last_week, (start_of_last_week, end_of_last_week))
-        last_week_data = cursor.fetchall()
+        # MongoDB aggregation pipeline for the current week
+        current_week_pipeline = [
+            {"$match": {"timestamp": {"$gte": start_of_week, "$lte": end_of_week}}},
+            {"$group": {"_id": {"$dayOfWeek": "$timestamp"}, "session_count": {"$addToSet": "$sessionID"}}},
+            {"$project": {"day": "$_id", "session_count": {"$size": "$session_count"}}},
+            {"$sort": {"day": 1}}
+        ]
+
+        # MongoDB aggregation pipeline for the previous week
+        last_week_pipeline = [
+            {"$match": {"timestamp": {"$gte": start_of_last_week, "$lte": end_of_last_week}}},
+            {"$group": {"_id": {"$dayOfWeek": "$timestamp"}, "session_count": {"$addToSet": "$sessionID"}}},
+            {"$project": {"day": "$_id", "session_count": {"$size": "$session_count"}}},
+            {"$sort": {"day": 1}}
+        ]
+
+        # Execute the MongoDB aggregations
+        current_week_data = list(collection.aggregate(current_week_pipeline))
+        last_week_data = list(collection.aggregate(last_week_pipeline))
 
         # Prepare data for JavaScript (current and last week's session data)
-        days = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+        days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"]
         current_week_session_data = [0, 0, 0, 0, 0, 0, 0]  # Initialize data for each day of the current week
         last_week_session_data = [0, 0, 0, 0, 0, 0, 0]  # Initialize data for each day of the previous week
-        
+
         for row in current_week_data:
-            day_name = row['day'].upper()
-            if day_name in days:
-                day_index = days.index(day_name)
-                current_week_session_data[day_index] = row['session_count']
-        
+            day_index = row.get('day', 0) - 1  # Adjust day index to match the "days" list
+            current_week_session_data[day_index] = row.get('session_count', 0)
+
         for row in last_week_data:
-            day_name = row['day'].upper()
-            if day_name in days:
-                day_index = days.index(day_name)
-                last_week_session_data[day_index] = row['session_count']
+            day_index = row.get('day', 0) - 1  # Adjust day index to match the "days" list
+            last_week_session_data[day_index] = row.get('session_count', 0)
 
         data = {
             'days': days,
             'current_week_session_data': current_week_session_data,
             'last_week_session_data': last_week_session_data
         }
+
         # Return the data as JSON
         return jsonify(data)
 
     except Exception as e:
         return jsonify({"error": str(e)})
-    
-@fetchData.route('/performance-barchart-data', methods=['GET'])
-def get_performanceBarChartData():
-    try:
-        
-        # Connect to the MySQL database
-        cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
-        # Query data for total sessions per month
-        query = (
-            "SELECT "
-            "MONTH(timestamp) AS month, "
-            "COUNT(DISTINCT sessionID) AS session_count "
-            "FROM tblconversations "
-            "GROUP BY month"
-        )
-        cursor.execute(query)
-        monthly_session_data = cursor.fetchall()
-
-        # Prepare data for JavaScript
-        months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
-        session_month = [0] * 12  # Initialize data for each month
-
-        for row in monthly_session_data:
-            month_index = row['month'] - 1  # MySQL months are 1-based
-            session_month[month_index] = row['session_count']
-
-        # Close the cursor and the database connection
-        cursor.close()
-
-        # Return the data as JSON
-        data = {"months": months, "session_counts": session_month}
-        
-        return jsonify(data)
-
-    except Exception as e:
-        return jsonify({"error": str(e)})
-    
 
 #BarChart MongoDB
 
