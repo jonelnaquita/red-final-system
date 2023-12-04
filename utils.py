@@ -23,10 +23,11 @@ utils = Blueprint("utils",
                 )
 
 mysql = MySQLdb.connect(
-        host="localhost",
-        user="root",
-        password="",
-        db="redchatbot"
+        host="bteoc1hjrvxi0jsf8u2d-mysql.services.clever-cloud.com",
+        user="u4ii1cazgwjra6qw",
+        port=3306,
+        password="M8iNilfIRKii1a2n4tL5",
+        db="bteoc1hjrvxi0jsf8u2d"
     )
 
 # MongoDB connection

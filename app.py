@@ -63,10 +63,11 @@ app = Flask(__name__,
 
 app.secret_key = 'xyzsdfg'
 
-app.config['MYSQL_HOST'] = "localhost"
-app.config['MYSQL_USER'] = "root"
-app.config['MYSQL_PASSWORD'] = ""
-app.config['MYSQL_DB'] = "redchatbot"
+app.config['MYSQL_HOST'] = "bteoc1hjrvxi0jsf8u2d-mysql.services.clever-cloud.com"
+app.config['MYSQL_USER'] = "u4ii1cazgwjra6qw"
+app.config['MYSQL_PORT'] = 3306
+app.config['MYSQL_PASSWORD'] = "M8iNilfIRKii1a2n4tL5"
+app.config['MYSQL_DB'] = "bteoc1hjrvxi0jsf8u2d"
 app.config['MYSQL_AUTOCOMMIT'] = True
 
 app.config['SECRET_KEY'] = 'ahsuahedwgdjsdhsbds283'
