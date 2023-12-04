@@ -13,7 +13,6 @@ import pdfkit
 import csv
 from io import BytesIO, StringIO
 from utils import mysql
-from utils import db
 
 report = Blueprint("report",
                 __name__,
@@ -23,8 +22,6 @@ report = Blueprint("report",
                 )
 
 #User Engagement PDF
-conversations_collection = db["conversations"]
-ratings_collection = db['ratings'] 
 
 @report.route('/generate-engagement-line-report')
 def generateEngagementLineReport():
@@ -35,33 +32,33 @@ def generateEngagementLineReport():
     # Parse date strings to datetime objects
     date_from = datetime.strptime(date_from_str, '%Y-%m-%d')
     date_to = datetime.strptime(date_to_str, '%Y-%m-%d')
-    
+
     # Generate a list of all dates within the range
     all_dates = [date_from + timedelta(days=x) for x in range((date_to - date_from).days + 1)]
 
-    # Query data for the specified date range
-    pipeline = [
-        {"$match": {"timestamp": {"$gte": date_from, "$lte": date_to}}},
-        {"$group": {"_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$timestamp"}}, "sessions": {"$addToSet": "$sessionID"}}},
-        {"$project": {"_id": 0, "date": "$_id", "sessions": {"$size": "$sessions"}}}
-    ]
+    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
 
-    data = list(conversations_collection.aggregate(pipeline))
+    # Query data for the specified date range
+    cursor.execute(
+        "SELECT DATE(timestamp) AS date, COUNT(DISTINCT sessionID) AS sessions "
+        "FROM tblconversations "
+        "WHERE DATE(timestamp) BETWEEN %s AND %s "
+        "GROUP BY date",
+        (date_from, date_to),
+    )
+    data = cursor.fetchall()
 
     # Create a dictionary to store the counts for each date
-    date_counts = {record["date"]: record["sessions"] for record in data}
+    date_counts = {date.strftime('%Y-%m-%d'): 0 for date in all_dates}
 
-    # Ensure all dates within the range are present in the dictionary
-    all_date_strs = [date.strftime('%Y-%m-%d') for date in all_dates]
+    # Update the dictionary with counts from the MySQL query
+    for record in data:
+        date_str = record["date"].strftime('%Y-%m-%d')
+        date_counts[date_str] = record["sessions"]
 
-    # Create a list of tuples (date, sessions) and sort it
-    sorted_date_counts = sorted(
-        [(date_str, date_counts.get(date_str, 0)) for date_str in all_date_strs],
-        key=lambda x: x[0]
-    )
-
-    date_labels, session_data = zip(*sorted_date_counts)
-
+    date_labels=list(date_counts.keys())
+    session_data=list(date_counts.values())
+    
     # Zipping data for the template
     zipped_data = zip(date_labels, session_data)
 
@@ -72,9 +69,9 @@ def generateEngagementLineReport():
         date_to=date_to_str,
         zipped_data=zipped_data  # Pass the zipped data to the template
     )
-
+    
     config = pdfkit.configuration(wkhtmltopdf='C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe')
-
+    
     date_today = datetime.now().strftime('%Y-%m-%d')
 
     # Configure PDF options
@@ -107,29 +104,32 @@ def generate_csv():
     date_from = datetime.strptime(date_from_str, '%Y-%m-%d')
     date_to = datetime.strptime(date_to_str, '%Y-%m-%d')
 
-    # Query data for the specified date range
-    pipeline = [
-        {"$match": {"timestamp": {"$gte": date_from, "$lte": date_to}}},
-        {"$group": {"_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$timestamp"}}, "sessions": {"$addToSet": "$sessionID"}}},
-        {"$project": {"_id": 0, "date": "$_id", "sessions": {"$size": "$sessions"}}}
-    ]
-
-    data = list(conversations_collection.aggregate(pipeline))
-
-    # Create a dictionary to store the counts for each date
-    date_counts = {record["date"]: record["sessions"] for record in data}
-
     # Generate a list of all dates within the range
     all_dates = [date_from + timedelta(days=x) for x in range((date_to - date_from).days + 1)]
 
-    # Ensure all dates within the range are present in the dictionary
-    all_date_strs = [date.strftime('%Y-%m-%d') for date in all_dates]
-    for date_str in all_date_strs:
-        date_counts.setdefault(date_str, 0)
+    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
+
+    # Query data for the specified date range
+    cursor.execute(
+        "SELECT DATE(timestamp) AS date, COUNT(DISTINCT sessionID) AS sessions "
+        "FROM tblconversations "
+        "WHERE DATE(timestamp) BETWEEN %s AND %s "
+        "GROUP BY date",
+        (date_from, date_to),
+    )
+    data = cursor.fetchall()
+
+    # Create a dictionary to store the counts for each date
+    date_counts = {date.strftime('%Y-%m-%d'): 0 for date in all_dates}
+
+    # Update the dictionary with counts from the MySQL query
+    for record in data:
+        date_str = record["date"].strftime('%Y-%m-%d')
+        date_counts[date_str] = record["sessions"]
 
     # Prepare CSV data
     csv_data = []
-    for index, (date, sessions) in enumerate(sorted(date_counts.items()), start=1):
+    for index, (date, sessions) in enumerate(date_counts.items(), start=1):
         csv_data.append([index, date, sessions])
 
     # Format filename with today's date
@@ -146,6 +146,8 @@ def generate_csv():
     response = make_response(csv_buffer.getvalue().encode('utf-8'))
     response.headers["Content-Disposition"] = f"attachment; filename={csv_filename}"
     response.headers["Content-type"] = "text/csv"
+
+    cursor.close()
 
     # Use send_file directly
     return send_file(
@@ -285,31 +287,37 @@ def generateEngagementMonthCSV():
 
 @report.route("/generate-satisfaction-data-report", methods=["GET"])
 def generate_satisfaction_data_report():
-    date_from_str = request.args.get("dateFrom")
-    date_to_str = request.args.get("dateTo")
+    date_from = request.args.get("dateFrom")
+    date_to = request.args.get("dateTo")
 
-    if date_from_str is None or date_to_str is None:
+    if date_from is None or date_to is None:
         # Handle the case where date_from or date_to is not provided
         return jsonify({"error": "Invalid date range"})
 
     # Convert date strings to datetime objects
-    date_from = datetime.strptime(date_from_str, "%Y-%m-%d")
-    date_to = datetime.strptime(date_to_str, "%Y-%m-%d")
+    date_from = datetime.strptime(date_from, "%Y-%m-%d")
+    date_to = datetime.strptime(date_to, "%Y-%m-%d")
+
+    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
 
     # Query to fetch sessionID, rating, and feedback for the specified date range
-    data = list(ratings_collection.find(
-        {"timestamp": {"$gte": date_from, "$lte": date_to}},
-        {"sessionID": 1, "rating": 1, "feedback": 1, "_id": 0}
-    ))
+    cursor.execute(
+        "SELECT DISTINCT sessionID, rating, feedback "
+        "FROM tblratings "
+        "WHERE timestamp BETWEEN %s AND %s",
+        (date_from, date_to),
+    )
+    data = cursor.fetchall()
+    cursor.close()
 
     # Render PDF template with the data
     rendered_template = render_template(
         'report/pdfSatisfactionReport.html',
-        date_from=date_from_str,
-        date_to=date_to_str,
+        date_from=date_from.strftime('%Y-%m-%d'),
+        date_to=date_to.strftime('%Y-%m-%d'),
         satisfaction_data=data
     )
-
+    
     config = pdfkit.configuration(wkhtmltopdf='C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe')
 
     # Configure PDF options
@@ -329,10 +337,12 @@ def generate_satisfaction_data_report():
 
     return response
 
+
 #Generate CSV
 
 @report.route("/generate-ratings-csv", methods=["GET"])
 def generate_ratings_csv():
+    # Get date range from request parameters
     date_from_str = request.args.get("dateFrom")
     date_to_str = request.args.get("dateTo")
 
@@ -344,11 +354,17 @@ def generate_ratings_csv():
     date_from = datetime.strptime(date_from_str, "%Y-%m-%d")
     date_to = datetime.strptime(date_to_str, "%Y-%m-%d")
 
-    # Query to fetch sessionID, rating, feedback, and timestamp for the specified date range
-    data = list(ratings_collection.find(
-        {"timestamp": {"$gte": date_from, "$lte": date_to}},
-        {"sessionID": 1, "rating": 1, "feedback": 1, "timestamp": 1, "_id": 0}
-    ))
+    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
+
+    # Query to fetch sessionID, rating, and feedback for the specified date range
+    cursor.execute(
+        "SELECT DISTINCT sessionID, rating, feedback, timestamp "
+        "FROM tblratings "
+        "WHERE timestamp BETWEEN %s AND %s",
+        (date_from, date_to),
+    )
+    data = cursor.fetchall()
+    cursor.close()
 
     # Prepare CSV data
     csv_data = [['No.', 'SessionID', 'Ratings', 'Feedback', 'Date']]
@@ -376,3 +392,4 @@ def generate_ratings_csv():
     response.headers["Content-type"] = "text/csv"
 
     return response
+

@@ -63,11 +63,10 @@ app = Flask(__name__,
 
 app.secret_key = 'xyzsdfg'
 
-app.config['MYSQL_HOST'] = "bteoc1hjrvxi0jsf8u2d-mysql.services.clever-cloud.com"
-app.config['MYSQL_USER'] = "u4ii1cazgwjra6qw"
-app.config['MYSQL_PORT'] = 3306
-app.config['MYSQL_PASSWORD'] = "M8iNilfIRKii1a2n4tL5"
-app.config['MYSQL_DB'] = "bteoc1hjrvxi0jsf8u2d"
+app.config['MYSQL_HOST'] = "localhost"
+app.config['MYSQL_USER'] = "root"
+app.config['MYSQL_PASSWORD'] = ""
+app.config['MYSQL_DB'] = "redchatbot"
 app.config['MYSQL_AUTOCOMMIT'] = True
 
 app.config['SECRET_KEY'] = 'ahsuahedwgdjsdhsbds283'
@@ -106,6 +105,9 @@ embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
 # MongoDB connection
 client = MongoClient(MONGODB_URI)
 db = client['redcms']
+
+conversations_collection = db["conversations"]
+admin_collection = db["admin"]
 
 @app.errorhandler(404)
 def page_not_found(error):
@@ -149,7 +151,7 @@ def home():
     
     return render_template('index.html')
 
-def check_password(password, hashed_password):
+def check_password_login(password, hashed_password):
     return bcrypt.checkpw(password.encode("UTF-8"), hashed_password)
 
 def hash_password(password):
@@ -161,31 +163,29 @@ def hash_password(password):
 def login():
     # Check if the user is already logged in
     if 'login' in session and session['login']:
-        return redirect(url_for('fetchData.dashboard'))
+        return redirect(url_for('dashboard'))
 
     message = ''
     if request.method == 'POST' and 'email' in request.form and 'password' in request.form:
         email = request.form['email']
         password = request.form['password']
 
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT * FROM tbluser WHERE email = %s', (email,))
-        user = cursor.fetchone()
-        cursor.close()
+        user = admin_collection.find_one({"email": email})
 
         if user:
-            hashed_password = user['password']
-            if check_password(password, hashed_password.encode("UTF-8")):
+            hashed_password = user.get('password', '')
+            if check_password_login(password, hashed_password):
                 session['login'] = True
-                session['admin'] = user['id']
-                session['email'] = user['email']
+                session['admin'] = user.get('userID', '')
+                session['email'] = user.get('email', '')
 
-                return redirect(url_for('dashboard'))   
-            message = 'Wrong password!'    
-            return render_template('login.html', message=message) 
-        message = 'Email address is not registered!'    
-        return render_template('login.html', message=message)          
+                return redirect(url_for('dashboard'))
+            message = 'Wrong password!'
+        else:
+            message = 'Email address is not registered!'
+
     return render_template('login.html', message=message)
+#Forgot Password Function
 
 @app.route('/dashboard')
 def dashboard():
@@ -193,74 +193,19 @@ def dashboard():
         # If 'login' session variable is not set or is False, redirect to login page
         return redirect(url_for('login'))
     
-    try:
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("SELECT COUNT(DISTINCT sessionID) AS session_count, COUNT(incomingMessage) AS inMessages, ROUND(AVG(responseTime), 2) AS avg_response_time FROM tblconversations")
-        data = cursor.fetchone()
-        
-        cursor.execute("SELECT COUNT(botMessage) AS botMessages FROM tblconversations WHERE botMessage != ''")
-        data2 = cursor.fetchone()
-        
-        #################################################################################################
-        # Get the current data
-        
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-                
-        #################################################################################################
-        
-        session_count = data['session_count']
-        inMessage_count = data['inMessages']
-        avg_response_time = data['avg_response_time']
-        botMessage_count = data2['botMessages']
-            
-        ############################### GET VISITOR DATA ################################################
-        
-        cursor.execute("SELECT COUNT(ip_address) AS visitor_number FROM tblvisitors")
-        visitors = cursor.fetchone()
-        visitor_count = visitors['visitor_number']
-        
-        # Fetch the visitor count for the day and month
-        current_date = datetime.now().strftime('%Y-%m-%d')
-        cursor.execute("SELECT COUNT(ip_address) AS visitor_number FROM tblvisitors WHERE date = %s", (current_date,))
-        today_visitors = cursor.fetchone()
-
-        cursor.execute("SELECT COUNT(ip_address) AS visitor_number FROM tblvisitors WHERE MONTH(date) = MONTH(CURDATE())")
-        monthly_visitors = cursor.fetchone()
-        
-        today_visitors = today_visitors['visitor_number']
-        monthly_visitors = monthly_visitors['visitor_number']
-        
-        
-        cursor.close()
-        
-        return render_template(
-            'dashboard.html',
-            session_count = session_count,
-            inMessage_count = inMessage_count,
-            botMessage_count = botMessage_count,
-            avg_response_time = avg_response_time,
-            visitor_count = visitor_count,
-            today_visitors = today_visitors,
-            monthly_visitors = monthly_visitors,
-        )
-        
-    except Exception as e:
-        return jsonify({"error": str(e)})
-    
 #Forgot Password Function
 
 @app.route("/send-email", methods=["GET"])
 def send_email():
     email = request.args.get("email")
 
-    # Check if the email is registered in your database
+    # Check if the email is registered in your MongoDB collection
     if is_email_registered(email):
         # Generate a random code
         reset_code = secrets.token_hex(16)  # You can adjust the length as needed
-        
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('UPDATE tbluser SET code = %s WHERE email = %s', (reset_code, email))
-        mysql.connection.commit()
+
+        # Update the reset code in the MongoDB collection
+        admin_collection.update_one({"email": email}, {"$set": {"code": reset_code}})
 
         msg_title = "Reset Password"
         sender = "noreply@app.com"
@@ -290,11 +235,8 @@ def send_email():
         return jsonify({"status": "error", "message": "Email not registered."})
 
 def is_email_registered(email):
-    # Connect to your MySQL database and check if the email exists
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute('SELECT * FROM tbluser WHERE email = %s', (email,))
-    user = cursor.fetchone()
-    cursor.close()
+    # Check if the email exists in the MongoDB collection
+    return admin_collection.find_one({"email": email}) is not None
 
     return user is not None
 
@@ -307,20 +249,17 @@ def change_user_password():
         new_password = data.get("new_password")
 
         # Check if the reset code is valid
-        cursor = mysql.connection.cursor()
-        cursor.execute('SELECT * FROM tbluser WHERE code = %s', (reset_code,))
-        user = cursor.fetchone()
-        cursor.close()
+        user = admin_collection.find_one({"code": reset_code})
 
         if user:
             # Hash the new password
             password_hashed = hash_password(new_password)
 
-            # Update the user's password in the database
-            cursor = mysql.connection.cursor()
-            cursor.execute('UPDATE tbluser SET password = %s, code = "" WHERE code = %s', (password_hashed, reset_code))
-            mysql.connection.commit()
-            cursor.close()
+            # Update the user's password and reset the code in the MongoDB collection
+            admin_collection.update_one(
+                {"code": reset_code},
+                {"$set": {"password": password_hashed, "code": ""}}
+            )
 
             return jsonify({"status": "success", "message": "Password reset successfully"})
         else:
@@ -411,7 +350,6 @@ def fallbacks():
         return redirect(url_for('login'))
     return render_template('fallbacks.html')
 
-
 @app.route('/conversations')
 def conversation():
     if 'login' not in session or not session['login']:
@@ -419,20 +357,28 @@ def conversation():
         return redirect(url_for('login'))
 
     # Fetch sessions with their most recent messages from the database
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("""
-       SELECT c1.sessionID, c1.timestamp, c1.incomingMessage, c1.botMessage
-        FROM tblconversations c1
-        JOIN (
-            SELECT sessionID, MAX(timestamp) AS max_timestamp
-            FROM tblconversations
-            GROUP BY sessionID
-        ) c2
-        ON c1.sessionID = c2.sessionID AND c1.timestamp = c2.max_timestamp
-        ORDER BY c1.timestamp DESC;
-    """)
-    sessions = cursor.fetchall()
-    cursor.close()
+    pipeline = [
+        {
+            "$sort": {"timestamp": -1}
+        },
+        {
+            "$group": {
+                "_id": "$sessionID",
+                "max_timestamp": {"$first": "$timestamp"},
+                "incomingMessage": {"$first": "$userQuery"},
+                "botMessage": {"$first": "$botMessage"}
+            }
+        },
+        {
+            "$sort": {"max_timestamp": -1}
+        }
+    ]
+
+    sessions = list(conversations_collection.aggregate(pipeline))
+
+    # Format timestamps to strings
+    for session_data in sessions:
+        session_data["timestamp"] = session_data["max_timestamp"].strftime('%Y-%m-%d %H:%M:%S')
 
     return render_template('conversations.html', sessions=sessions)
 
@@ -441,33 +387,39 @@ def conversation():
 def settings():
     if 'login' not in session or not session['login']:
         return redirect(url_for('login'))
+
     if request.method == 'POST':
         current_password = request.form['current_password']
         new_email = request.form['new_email']
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT email, password FROM tbluser WHERE id = %s', (session['admin'],))
-        user = cursor.fetchone()
+
+        user = admin_collection.find_one({"userID": session['admin']}, {"email": 1, "password": 1})
+
         if user:
             if new_email == user['email']:
                 flash('This email is already in use. Please choose a different email address.', 'danger')
             else:
-                hashed_password = user['password'].encode("utf-8")
+                hashed_password = user.get('password', b'')
                 if bcrypt.checkpw(current_password.encode("utf-8"), hashed_password):
-                    cursor.execute('UPDATE tbluser SET email = %s WHERE id = %s', (new_email, session['admin']))
-                    mysql.connection.commit()
-                    cursor.close()
+                    admin_collection.update_one({"userID": session['admin']}, {"$set": {"email": new_email}})
                     flash('Email address updated successfully!', 'success')
                     return redirect(url_for('settings'))
                 else:
                     flash('Incorrect password. Please try again.', 'danger')
         else:
             flash('User not found.', 'danger')
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute('SELECT email FROM tbluser WHERE id = %s', (session['admin'],))
-    user = cursor.fetchone()
-    current_email = user['email'] if user else ''
-    cursor.close()
+
+    user = admin_collection.find_one({"userID": session['admin']}, {"email": 1})
+    current_email = user.get('email', '') if user else ''
+    
     return render_template('settings.html', current_email=current_email)
+
+def check_password(password, hashed_password):
+    return bcrypt.checkpw(password.encode("UTF-8"), hashed_password)
+
+def generate_password_hash(password):
+    salt = bcrypt.gensalt(13)
+    hashed_password = bcrypt.hashpw(password.encode("UTF-8"), salt)
+    return hashed_password
 
 #CHANGE PASSWORD
 @app.route('/change-password', methods=['GET', 'POST'])
@@ -477,30 +429,29 @@ def change_password():
         new_password = request.form['new_password']
         confirm_password = request.form['confirm_password']
 
-        # Validate the form data (e.g., password complexity)
+        # Check if the user exists and the current password is correct
+        user = admin_collection.find_one({"userID": session.get('admin', 0)})
 
-        # Check if the new password matches the current password in the database
-        with mysql.connection.cursor(MySQLdb.cursors.DictCursor) as cursor:
-            cursor.execute('SELECT password FROM tbluser WHERE id = %s', (session.get('admin', 0),))
-            result = cursor.fetchone()
-            if result is None:
-                flash('User not found.', 'danger')
-            elif not bcrypt.checkpw(current_password.encode("utf-8"), result['password'].encode("utf-8")):
-                flash('Incorrect current password.', 'danger')
-            elif new_password != confirm_password:
-                flash('New password and confirm password do not match.', 'danger')
-            else:
-                try:
-                    # Update the user's password in the database
-                    password_hashed = hash_password(new_password)
-                    cursor.execute('UPDATE tbluser SET password = %s WHERE id = %s', (password_hashed, session.get('admin', 0)))
-                    mysql.connection.commit()
+        if user is None:
+            flash('User not found.', 'danger')
+        elif not check_password(current_password, user.get('password', '')):
+            flash('Incorrect current password.', 'danger')
+        elif new_password != confirm_password:
+            flash('New password and confirm password do not match.', 'danger')
+        else:
+            try:
+                # Update the user's password in the database
+                password_hashed = generate_password_hash(new_password)
+                admin_collection.update_one(
+                    {"userID": session.get('admin', 0)},
+                    {"$set": {"password": password_hashed}}
+                )
 
-                    flash('Password updated successfully!', 'success')
-                    return redirect(url_for('settings'))
-                except Exception as e:
-                    # Handle database or other errors
-                    flash('An error occurred. Please try again later.', 'danger')
+                flash('Password updated successfully!', 'success')
+                return redirect(url_for('settings'))
+            except Exception as e:
+                # Handle database or other errors
+                flash(f'An error occurred: {str(e)}', 'danger')
 
     return render_template('settings.html')
 
@@ -514,16 +465,13 @@ def logout():
 #LIST CONVERSATION
 @app.route('/conversations/<session_id>')
 def get_conversation(session_id):
+
     # Fetch the conversation for the given session ID from the database
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("""
-        SELECT timestamp, incomingMessage, botMessage
-        FROM tblconversations
-        WHERE sessionID = %s
-        ORDER BY timestamp ASC
-    """, (session_id,))
-    conversation = cursor.fetchall()
-    cursor.close()
+    conversation = list(conversations_collection.find(
+        {"sessionID": session_id},
+        {"timestamp": 1, "userQuery": 1, "botMessage": 1, "_id": 0}
+    ).sort("timestamp", 1))
+
     return jsonify(conversation)
 
 #Remove Style from a textarea
@@ -1031,8 +979,7 @@ def dialogflow_ratings():
     else:
         rating = "Unsatisfied"
     
-    ph_time = pytz.timezone('Asia/Manila')
-    timestamp = datetime.now(ph_time)
+    timestamp = datetime.today()
     
     # Create a cursor and execute the SQL query
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)

@@ -19,10 +19,10 @@
                                     <div class="inbox_people">
                                         <div class="inbox_chat">
                                             {% for session in sessions %}
-                                                <div class="chat_list tab-pane" data-session-id="{{ session.sessionID }}">
+                                                <div class="chat_list tab-pane" data-session-id="{{ session._id }}">
                                                     <div class="chat_people">
                                                         <div class="chat_ib">
-                                                            <input type="hidden" value="{{ session.sessionID }}">
+                                                            <input type="hidden" value="{{ session._id }}">
                                                             <h5>{{ session.incomingMessage if session.incomingMessage else session.botMessage }}</h5>
                                                             <p><span class="chat_date">{{ session.timestamp }}</span></p>
                                                         </div>
@@ -65,7 +65,7 @@
                                 <div class="incoming_msg">
                                     <div class="received_msg">
                                         <div class="received_withd_msg">
-                                            <p>${message.incomingMessage}</p>
+                                            <p>${message.userQuery}</p>
                                             <span class="time_date">${message.timestamp}</span>
                                         </div>
                                     </div>
@@ -118,7 +118,7 @@
                                 <div class="incoming_msg">
                                     <div class="received_msg">
                                         <div class="received_withd_msg">
-                                            <p>${message.incomingMessage}</p>
+                                            <p>${message.userQuery}</p>
                                             <span class="time_date">${message.timestamp}</span>
                                         </div>
                                     </div>

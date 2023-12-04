@@ -39,11 +39,12 @@
                       </div>
                     </div>
                     <div class="chartjs-wrapper mt-4"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
-                      <canvas id="performaneLine" style="display: block; width: 775px; height: 150px;" width="775" height="150" class="chartjs-render-monitor"></canvas> 
+                      <canvas id="performaneLine" style="display: block; width: 775px; height: 400px;" width="775" height="150" class="chartjs-render-monitor"></canvas> 
                     </div>
                   </div>
                 </div>
               </div>
+              <!--
               <div class="col-12 col-lg-4 col-lg-12 grid-margin stretch-card">
                 <div class="card card-rounded">
                   <div class="card-body">
@@ -72,7 +73,6 @@
 
                             </tbody>
                             <tfoot>
-                              <!-- Footer rows go here -->
                             </tfoot>
                           </table>
                         </div>
@@ -80,7 +80,7 @@
                     </div>
                   </div>                  
                 </div>
-              </div>
+              </div>-->
             </div>
         </div>
     </div>
@@ -93,7 +93,6 @@
   $(document).ready(function () {
       // Fetch user engagement data on page load
       fetchUserEngagementData();
-      filterUserEngagementData()
 
       $("#filter-btn").on("click", function () {
         filterUserEngagementData();
