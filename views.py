@@ -11,6 +11,7 @@ import bcrypt
 import requests
 import os
 from utils import mysql
+from utils import db
 
 views = Blueprint("views",
                 __name__,
@@ -53,28 +54,41 @@ def userSatisfaction():
     
     return render_template('usersatisfaction.html')
     
+    
+conversations_collection = db['conversations']
+
 @views.route('/conversation-length')
-def conversationLength():
+def conversation_length():
     if 'login' not in session or not session['login']:
         # If 'login' session variable is not set or is False, redirect to login page
         return redirect(url_for('login'))
-    
-    # Fetch sessions with their most recent messages from the database
-    cursor = mysql.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("""
-       SELECT c1.sessionID, c1.timestamp, c1.incomingMessage, c1.botMessage
-        FROM tblconversations c1
-        JOIN (
-            SELECT sessionID, MAX(timestamp) AS max_timestamp
-            FROM tblconversations
-            GROUP BY sessionID
-        ) c2
-        ON c1.sessionID = c2.sessionID AND c1.timestamp = c2.max_timestamp
-        ORDER BY c1.timestamp DESC;
-    """)
-    sessions = cursor.fetchall()
-    cursor.close()
-    
+
+    # MongoDB Aggregation Pipeline
+    pipeline = [
+        {
+            '$sort': {'timestamp': -1}  # Sort in descending order based on timestamp
+        },
+        {
+            '$group': {
+                '_id': '$sessionID',
+                'max_timestamp': {'$first': '$timestamp'},
+                'session_data': {'$first': '$$ROOT'}  # Preserve the entire document for the latest timestamp
+            }
+        },
+        {
+            '$project': {
+                '_id': 0,
+                'sessionID': '$_id',
+                'timestamp': '$max_timestamp',
+                'incomingMessage': '$session_data.userQuery',
+                'botMessage': '$session_data.botMessage'
+            }
+        }
+    ]
+
+    # Execute the aggregation pipeline
+    sessions = list(conversations_collection.aggregate(pipeline))
+
     return render_template('conversationlength.html', sessions=sessions)
 
 @views.route('/privacy-policy')
