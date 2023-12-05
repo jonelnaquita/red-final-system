@@ -836,7 +836,7 @@ def dialogflow_webhook():
         start_time = datetime.now()
 
         query = str(data['text'])
-        postPrompt = str(query + " Don’t give me information not in your context.")
+        postPrompt = str(query + " Strictly don’t give me information not in your knowledge based or context.")
 
         # Get conversation string before updating
         conversation_string_before = get_conversation_string(sessionID)
