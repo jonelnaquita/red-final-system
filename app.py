@@ -889,7 +889,7 @@ def dialogflow_webhook():
         conversation_data = {
             "sessionID": sessionID,
             "userQuery": query,
-            "botMessage": botMessage,
+            "botMessage": response,
             "response_time": response_time,  # replace with the actual response time
             "timestamp": timestamp
         }
