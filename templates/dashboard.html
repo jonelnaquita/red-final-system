@@ -148,6 +148,27 @@
                                           <p class="card-subtitle card-subtitle-dash">RED Engagement Per Month</p>
                                         </div>
                                         <div>
+                                          <select id="yearSelect" class="form-select" aria-label="Select Year">
+                                            <option selected disabled>Select Year</option>
+                                        </select>
+                                        
+                                        <script>
+                                            // Get the select element
+                                            var select = document.getElementById("yearSelect");
+                                        
+                                            // Get the current year
+                                            var currentYear = new Date().getFullYear();
+                                        
+                                            // Generate options for every year starting from 2023 to the current year
+                                            for (var year = 2023; year <= currentYear; year++) {
+                                                var option = document.createElement("option");
+                                                option.text = year;
+                                                option.value = year;
+                                                select.appendChild(option);
+                                            }
+                                        </script>
+                                        
+
                                         </div>
                                       </div>
                                       <div class="d-sm-flex align-items-center mt-1 justify-content-between">
@@ -574,6 +595,23 @@
         .then(response => response.json())
         .then(data => {
             updateBarChart(data);
+        })
+        .catch(error => console.error(error));
+    }
+
+    $('#yearSelect').change(function() {
+      fetchPerformanceBarChart($(this).val());
+    });
+
+    function fetchPerformanceBarChart(selectedYear) {
+      var url = '/filter-performance-barchart-data';
+      if (selectedYear) {
+        url += '?year=' + selectedYear;
+      }
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          updateBarChart(data);
         })
         .catch(error => console.error(error));
     }

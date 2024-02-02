@@ -162,7 +162,7 @@
                                             <td style="width: 5%;">
                                                 <div class="form-check form-check-flat form-check-primary">
                                                     <label class="form-check-label">
-                                                        <input type="checkbox" class="form-check-input" value="{{ row.id }}">
+                                                        <input type="checkbox" class="form-check-input" value="{{ row._id }}">
                                                     </label>
                                                 </div>
                                             </td>                                            
@@ -180,8 +180,9 @@
                                                         <i class="mdi mdi-dots-vertical menu-icon"></i>
                                                     </button>
                                                     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                                                        <button type="button" class="dropdown-item edit-button" data-bs-toggle="modal" data-bs-target="#editText" data-id="{{ row.id }}" data-text="{{ row.dataText }}" data-whatever="@mdo">Edit</button>
-                                                        <button type="button" class="dropdown-item view-button" data-bs-toggle="modal" data-bs-target="#exampleModal-4" data-id="{{ row.id }}" data-text="{{ row.dataText }}" data-whatever="@mdo">View</button>
+                                                        <button type="button" class="dropdown-item edit-button" data-bs-toggle="modal" data-bs-target="#editText" data-id="{{ row._id }}" data-text="{{ row.dataText }}" data-whatever="@mdo">Edit</button>
+                                                        <button type="button" class="dropdown-item view-button" data-bs-toggle="modal" data-bs-target="#exampleModal-4" data-id="{{ row._id }}" data-text="{{ row.dataText }}" data-whatever="@mdo">View</button>
+
                                                     </div>
                                                 </div>
                                             </td>
@@ -213,7 +214,7 @@
                                         <td style="width: 5%;">
                                             <div class="form-check form-check-flat form-check-primary">
                                                 <label class="form-check-label">
-                                                    <input type="checkbox" class="form-check-input" value="{{ row.id }}">
+                                                    <input type="checkbox" class="form-check-input" value="{{ row._id }}">
                                                 </label>
                                             </div>
                                         </td>
@@ -250,7 +251,7 @@
                                                     <i class="mdi mdi-dots-vertical menu-icon"></i>
                                                 </button>
                                                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                                                    <button type="button" class="dropdown-item edit-button" data-bs-toggle="modal" data-bs-target="#editFAQ" data-id="{{ row.id }}" data-question="{{ row.dataFAQQuestion }}" data-answer="{{ row.dataFAQAnswer }}">Edit</button>
+                                                    <button type="button" class="dropdown-item edit-button" data-bs-toggle="modal" data-bs-target="#editFAQ" data-id="{{ row._id }}" data-question="{{ row.dataFAQQuestion }}" data-answer="{{ row.dataFAQAnswer }}">Edit</button>
                                                 </div>
                                             </div>
                                         </td>
@@ -357,7 +358,7 @@
                             <label for="FAQEditor"><b>Answer:</b></label>
                             <textarea name="answers" id="FAQEditor" rows="10"></textarea>
                         </div>
-                        <input type="hidden" name="faqID" id="faqID"> <!-- Add this hidden input field -->
+                        <input type="text" name="faqID" id="faqID"> <!-- Add this hidden input field -->
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-danger">Submit</button> <!-- Change to type="submit" -->

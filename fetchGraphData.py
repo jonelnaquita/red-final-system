@@ -8,12 +8,12 @@ import MySQLdb.cursors
 import json
 import re
 import bcrypt
-import requests
 import os
-from utils import mysql
 from utils import db
 
 from bson.son import SON
+import nltk
+from nltk.tokenize import word_tokenize
 
 fetchData = Blueprint("fetchData",
                 __name__,
@@ -21,6 +21,8 @@ fetchData = Blueprint("fetchData",
                 static_folder="static",
                 static_url_path="/static"
                 )
+
+platforms_collection = db['platforms']
 
 ################### HORIZONTAL DASHBOARD #####################
 
@@ -348,26 +350,25 @@ def get_performance_linechart_data():
         return jsonify({"error": str(e)})
 
 #BarChart MongoDB
-
-@fetchData.route('/performance-barchart-data', methods=['GET'])
-def get_performanceBarChartDataMongoDB():
+    
+#Filter Performance Bar Chart
+@fetchData.route('/filter-performance-barchart-data', methods=['GET'])
+def filter_performanceBarChartDataMongoDB():
     try:
+        current_year = datetime.now().year
+        selected_year = request.args.get('year', str(current_year))  # Default to current year if no year is provided
+        selected_year = int(selected_year)  # Convert to integer
+
         collection = db["conversations"]
-        
+
+        # Define the match condition for the year if provided
+        match_condition = {"$expr": {"$eq": [{"$year": "$timestamp"}, selected_year]}}
+
         # Query data for total sessions per month
         pipeline = [
-            {
-                "$group": {
-                    "_id": {"$month": "$timestamp"},
-                    "session_count": {"$addToSet": "$sessionID"}
-                }
-            },
-            {
-                "$project": {
-                    "month": "$_id",
-                    "session_count": {"$size": "$session_count"}
-                }
-            }
+            {"$match": match_condition},
+            {"$group": {"_id": {"$month": "$timestamp"}, "session_count": {"$addToSet": "$sessionID"}}},
+            {"$project": {"month": "$_id", "session_count": {"$size": "$session_count"}}}
         ]
 
         monthly_session_data = list(collection.aggregate(pipeline))
@@ -387,6 +388,7 @@ def get_performanceBarChartDataMongoDB():
 
     except Exception as e:
         return jsonify({"error": str(e)})
+
     
     
 @fetchData.route('/session-summary-data', methods=['GET'])
@@ -977,5 +979,81 @@ def get_conversation():
 
         return jsonify(conversation)
 
+    except Exception as e:
+        return jsonify({"error": str(e)})
+    
+    
+#################### FETCH THE PLATFORM COSTING ##############################
+
+@fetchData.route('/get-platform-costing', methods=['GET'])
+def getPlatformCosting():
+    try:
+        # Get the current year
+        current_year = datetime.now().year
+        
+        # Get the selected year from the request query parameters
+        selected_year = request.args.get('year', str(current_year))
+        selected_year = int(selected_year)  # Convert to integer
+        
+        # Define the match condition for the current year
+        match_condition = {"$expr": {"$eq": [{"$year": "$timestamp"}, selected_year]}}
+        
+        # Initialize nltk tokenizer
+        nltk.download('punkt')  # Download the necessary resources for tokenization
+        
+        # Define the months in chronological order
+        months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+        
+        # Initialize dictionaries to store data for each month
+        total_tokens_per_month_gpt = {month: 0 for month in months}
+        total_cost_per_month_gpt = {month: 0 for month in months}
+        total_requests_per_month_dialogflow = {month: 0 for month in months}
+        total_cost_per_month_dialogflow = {month: 0 for month in months}
+        
+        # Retrieve the cost of GPT 3.5 Turbo and Dialogflow CX from the platforms collection
+        gpt_cost_document = platforms_collection.find_one({"name": "GPT 3.5 Turbo"})
+        gpt_cost = float(gpt_cost_document.get("cost", 0))  # Convert cost to float
+        
+        dialogflow_cost_document = platforms_collection.find_one({"name": "Dialogflow CX"})
+        dialogflow_cost = float(dialogflow_cost_document.get("cost", 0))  # Convert cost to float
+        
+         # Query data based on the match condition
+        bot_messages = conversations_collection.find({"$and": [{"botMessage": {"$exists": True}}, match_condition]})
+        
+        # Calculate the total tokens used and total cost per month for GPT 3.5 Turbo
+        for message in bot_messages:
+            month = message["timestamp"].strftime("%b").upper()
+            tokens = word_tokenize(message["botMessage"])
+            total_tokens_per_month_gpt[month] += len(tokens)
+            total_cost_per_month_gpt[month] += (len(tokens) / 1000) * gpt_cost  # Calculate cost for every 1k tokens
+        
+        # Retrieve Dialogflow CX requests from the conversations collection
+        dialogflow_requests = conversations_collection.find({"$and": [{"botMessage": {"$exists": True}}, match_condition]})
+        
+        # Calculate the total requests and total cost per month for Dialogflow CX
+        for in_request in dialogflow_requests:
+            month = in_request["timestamp"].strftime("%b").upper()
+            total_requests_per_month_dialogflow[month] += 1
+            total_cost_per_month_dialogflow[month] += dialogflow_cost
+        
+        # Prepare response data
+        response_data = []
+        for month in months:
+            total_tokens_used_gpt = total_tokens_per_month_gpt[month]
+            total_cost_gpt = total_cost_per_month_gpt[month]
+            total_requests_dialogflow = total_requests_per_month_dialogflow[month]
+            total_cost_dialogflow = total_cost_per_month_dialogflow[month]
+            total_cost = round(total_cost_dialogflow + total_cost_gpt, 2)  # Limit to 2 decimal places
+            response_data.append({
+                "month": month,
+                "total_tokens_used_gpt": total_tokens_used_gpt,
+                "gpt_cost": round(total_cost_gpt, 2),  # Limit to 2 decimal places
+                "total_requests_dialogflow": total_requests_dialogflow,
+                "dialogflow_cost": round(total_cost_dialogflow, 2),  # Limit to 2 decimal places
+                "total_cost": total_cost
+            })
+
+        return jsonify(response_data)
+    
     except Exception as e:
         return jsonify({"error": str(e)})

@@ -1,16 +1,15 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from flask_mysqldb import MySQL
-from MySQLdb import OperationalError
+from bson import ObjectId
 
 from datetime import datetime, timedelta
 from apiip import apiip
 import pytz
-import MySQLdb.cursors
 import json
 import re
 import bcrypt
 import requests
 import pdfkit
+
 
 from views import views
 from utils import utils
@@ -63,13 +62,6 @@ app = Flask(__name__,
 
 app.secret_key = 'xyzsdfg'
 
-app.config['MYSQL_HOST'] = "bteoc1hjrvxi0jsf8u2d-mysql.services.clever-cloud.com"
-app.config['MYSQL_USER'] = "u4ii1cazgwjra6qw"
-app.config['MYSQL_PORT'] = 3306
-app.config['MYSQL_PASSWORD'] = "M8iNilfIRKii1a2n4tL5"
-app.config['MYSQL_DB'] = "bteoc1hjrvxi0jsf8u2d"
-app.config['MYSQL_AUTOCOMMIT'] = True
-
 app.config['SECRET_KEY'] = 'ahsuahedwgdjsdhsbds283'
 app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
 app.config['MAIL_PORT'] = 587
@@ -79,8 +71,6 @@ app.config['MAIL_USERNAME'] = 'responseandengagedirectly@gmail.com'
 app.config['MAIL_PASSWORD'] = 'ylmi ymrv acrr tksv'
 
 mail = Mail(app)
-
-mysql = MySQL(app)
 
 #Register Views
 app.register_blueprint(views)
@@ -109,6 +99,10 @@ db = client['redcms']
 
 conversations_collection = db["conversations"]
 admin_collection = db["admin"]
+data_collection = db['data']
+documents_collection = db['documents']
+platforms_collection = db["platforms"]
+
 
 @app.errorhandler(404)
 def page_not_found(error):
@@ -129,13 +123,6 @@ def home():
     country = info.get('countryName')
     ph_time = pytz.timezone('Asia/Manila')
     timestamp = datetime.today()
-
-    # Save location data to MySQL database
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("INSERT INTO tblvisitors (ip_address, city, region, country, date) VALUES (%s, %s, %s, %s, %s)",
-                   (visitor_ip, city, region, country, timestamp))
-    mysql.connection.commit()
-    cursor.close()
     
     #Save to MongoDB
     collection = db["visitors"]
@@ -269,71 +256,53 @@ def change_user_password():
         # Handle other HTTP methods if needed
         return render_template('utils/changepassword.html')
 
+@app.route('/get-platform-cost')
+def platform_cost():
+    platforms = list(platforms_collection.find({}))
+    # Convert ObjectId to string
+    for platform in platforms:
+        platform['_id'] = str(platform['_id'])
+    return jsonify(platforms)
 
 @app.route('/manage')
-def managedatasource():
+def manage_datasource():
     if 'login' not in session or not session['login']:
         # If 'login' session variable is not set or is False, redirect to login page
         return redirect(url_for('login'))
     
-    # Fetch data from the MySQL database
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM tbldata WHERE dataSource = 'Text'")
-    dataText = cursor.fetchall()
-    cursor.close()
+    # Fetch data from the MongoDB collections
+    data_text = data_collection.find({'dataSource': 'Text'})
+    data_FAQ = data_collection.find({'dataSource': 'FAQ'})
     
-    cursor1 = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor1.execute("SELECT * FROM tbldata WHERE dataSource = 'FAQ'")
-    dataFAQ = cursor1.fetchall()
-    cursor1.close()
+    # Fetch data from the MongoDB collections for total sources, processed, and error
+    total_sources = data_collection.count_documents({})
+    processed = documents_collection.count_documents({'status': 'Processed'})
+    error = documents_collection.count_documents({'status': 'Error'})
     
-    # Fetch data from the MySQL database for total sources, processed, and error
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT COUNT(*) AS total_sources FROM tbldata")
-    total_sources = cursor.fetchone()['total_sources']
-
-    cursor.execute("SELECT COUNT(*) AS processed FROM tbldocuments WHERE status = 'Processed'")
-    processed = cursor.fetchone()['processed']
-
-    cursor.execute("SELECT COUNT(*) AS error FROM tbldocuments WHERE status = 'Error'")
-    error = cursor.fetchone()['error']
-    
-    cursor.close()
-    
-    return render_template('datasource.html', data = dataText, dataFAQ = dataFAQ, total_sources=total_sources, processed=processed, error=error)
+    return render_template('datasource.html', data=data_text, dataFAQ=data_FAQ, total_sources=total_sources, processed=processed, error=error)
 
 #Delete Text Data
 @app.route('/delete_selected', methods=['POST'])
 def delete_selected_rows():
     try:
         selected_ids = request.form.getlist('selected_ids[]')  # Get the selected row IDs
-        selected_ids = [int(id) for id in selected_ids]  # Convert IDs to integers
-
+        selected_ids = [ObjectId(id) for id in selected_ids]  # Convert IDs to ObjectId
+        
         if len(selected_ids) == 0:
             return jsonify({'success': False, 'message': 'No rows selected for deletion'})
-
-        # Establish a database connection (you may need to adapt this to your code)
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         
         # Step 1: Fetch Vector IDs associated with selected IDs
-        select_vector_ids_query = "SELECT vectorID FROM tbldata WHERE id IN (%s)"
-        placeholders = ', '.join(['%s'] * len(selected_ids))
-        select_vector_ids_query = select_vector_ids_query % placeholders
-        cursor.execute(select_vector_ids_query, tuple(selected_ids))
-        vector_ids = [row['vectorID'] for row in cursor.fetchall()]
+        cursor = data_collection.find({'_id': {'$in': selected_ids}}, {'vectorID': 1})
+        vector_ids = [doc['vectorID'] for doc in cursor]
+
+        # Step 2: Delete the rows from MongoDB
+        result = data_collection.delete_many({'_id': {'$in': selected_ids}})
         
-        # Delete the rows from MySQL
-        delete_query = "DELETE FROM tbldata WHERE id IN (%s)"
-        delete_query = delete_query % placeholders
-        cursor.execute(delete_query, tuple(selected_ids))
-        mysql.connection.commit()
-        cursor.close()
-        
-        # Step 2: Use Pinecone to delete the vectors
+        # Step 3: Use Pinecone to delete the vectors
         index = pinecone.Index(INDEX_NAME)
         index.delete(ids=vector_ids)  # Delete vectors using Vector IDs
         
-        return jsonify({'success': True, 'message': 'Selected rows deleted successfully'})
+        return jsonify({'success': True, 'message': f'{result.deleted_count} rows deleted successfully'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
 
@@ -492,11 +461,10 @@ def save_text():
         dataSource = "Text"
         text = request.form['textarea']
 
-        text = removeStyles(text)
         text_data.append(text)
         
         ph_time = pytz.timezone('Asia/Manila')
-        dateAdded = datetime.now(ph_time)
+        dateAdded = datetime.today()
 
         try:
             # Index text data in Pinecone
@@ -520,26 +488,24 @@ def save_text():
             characters = len(text)
             status = "Processed"
 
-            # Create a query to save in MySQL
-            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            cursor.execute("INSERT INTO tbldata (vectorID, dataSource, dataText, characters, status, dateAdded) VALUES (%s, %s, %s, %s, %s, %s)",(vectorID, dataSource, text, characters, status, dateAdded))
-            mysql.connection.commit()
+            # Insert data into MongoDB collections
+            data_collection.insert_one({
+                'vectorID': vectorID,
+                'dataSource': dataSource,
+                'dataText': text,
+                'characters': characters,
+                'status': status,
+                'dateAdded': dateAdded
+            })
 
-            # Insert "Processed" status into tbldocuments
-            cursor1 = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            cursor1.execute("INSERT INTO tbldocuments (status) VALUES (%s)", (status,))
-            mysql.connection.commit()
-            cursor1.close()
+            documents_collection.insert_one({'status': status})
 
             return jsonify({"message": "Data source added successfully"})
 
         except Exception as e:
             # Handle exceptions and insert "Error" status into tbldocuments
             status = "Error"
-            cursor1 = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            cursor1.execute("INSERT INTO tbldocuments (status) VALUES (%s)", (status,))
-            mysql.connection.commit()
-            cursor1.close()
+            documents_collection.insert_one({'status': status})
             return jsonify({"message": f"An error occurred: {str(e)}"})
 
     return "Invalid request"
@@ -551,54 +517,48 @@ def editTextData():
     if request.method == 'POST':
         text_id = request.form['textId']  # Get the ID from the form
         text = request.form['updateText']
+        
+        object_id = ObjectId(text_id)
 
         text = removeStyles(text)
         text_data.append(text)
 
         characters = len(text)
 
-        # Create a query to save in MySQL with the ID in the WHERE clause
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("UPDATE tbldata SET dataText = %s, characters = %s WHERE id = %s", (text, characters, text_id))
-        mysql.connection.commit()
-        cursor.close()
+        data_collection.update_one({'_id': object_id}, {'$set': {'dataText': text, 'characters': characters}})
 
-        # Retrieve the updated data from MySQL
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("SELECT dataText, vectorID FROM tbldata WHERE id = %s", (text_id,))
-        row = cursor.fetchone()  # Fetch one row
+        # Retrieve the updated data from MongoDB
+        updated_data = data_collection.find_one({'_id': object_id}, {'dataText': 1, 'vectorID': 1})
 
-        if row:
-            updated_text = row['dataText']
-            vectorID = row['vectorID']
+        if updated_data:
+            updated_text = updated_data.get('dataText')  # Use get method to safely retrieve values
+            vectorID = updated_data.get('vectorID')
+            
+            print(vectorID)
+
+            if vectorID:
+                try:
+                    # Update the data in the Pinecone vector database
+                    test_bed = openai.Embedding.create(
+                        input=[
+                            updated_text
+                        ],
+                        engine=EMBEDDING_MODEL
+                    )
+
+                    test_vector = test_bed['data'][0]['embedding']
+
+                    # Query Pinecone for similar vectors
+                    index = pinecone.Index(INDEX_NAME)
+                    index.update(id=vectorID, values=test_vector, set_metadata={'text': updated_text})
+
+                    return jsonify({"message": "Data source updated successfully"})
+                except Exception as e:
+                    return jsonify({"message": f"Error updating data in Pinecone: {str(e)}"})
+            else:
+                return jsonify({"message": "No vectorID found for the given id. Cannot update data in Pinecone."})
         else:
-            # Handle the case where no row was found for the given id
-            updated_text = None
-            vectorID = None
-
-        cursor.close()
-
-        if vectorID:
-            try:
-                # Update the data in the Pinecone vector database
-                test_bed = openai.Embedding.create(
-                    input=[
-                        updated_text
-                    ],
-                    engine=EMBEDDING_MODEL
-                )
-
-                test_vector = test_bed['data'][0]['embedding']
-
-                # Query Pinecone for similar vectors
-                index = pinecone.Index(INDEX_NAME)
-                index.update(id=vectorID, values=test_vector, set_metadata={'text': updated_text})
-
-                return jsonify({"message": "Data source updated successfully"})
-            except Exception as e:
-                return jsonify({"message": f"Error updating data in Pinecone: {str(e)}"})
-        else:
-            return jsonify({"message": "No vectorID found for the given id. Cannot update data in Pinecone."})
+            return jsonify({"message": "No document found for the given id."})
 
     return "Invalid request"
 
@@ -621,27 +581,28 @@ def editFAQData():
         
         characters = len(faq_text)
 
-        # Update the question and answer in MySQL
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("UPDATE tbldata SET dataFAQQuestion = %s, dataFAQAnswer = %s, office = %s, characters = %s WHERE id = %s", (question, answer, office, characters, faq_id))
-        mysql.connection.commit()
-        cursor.close()
+        # Update the question and answer in MongoDB
+        data_collection.update_one(
+            {'_id': ObjectId(faq_id)},
+            {'$set': {
+                'dataFAQQuestion': question,
+                'dataFAQAnswer': answer,
+                'office': office,
+                'characters': characters
+            }}
+        )
 
-        # Retrieve the updated data from MySQL
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("SELECT dataFAQQuestion, dataFAQAnswer, vectorID FROM tbldata WHERE id = %s", (faq_id,))
-        row = cursor.fetchone()
+        # Retrieve the updated data from MongoDB
+        updated_data = data_collection.find_one({'_id': ObjectId(faq_id)}, {'dataFAQQuestion': 1, 'dataFAQAnswer': 1, 'vectorID': 1})
 
-        if row:
-            updated_question = row['dataFAQQuestion']
-            updated_answer = row['dataFAQAnswer']
-            vectorID = row['vectorID']
+        if updated_data:
+            updated_question = updated_data['dataFAQQuestion']
+            updated_answer = updated_data['dataFAQAnswer']
+            vectorID = updated_data['vectorID']
         else:
             updated_question = None
             updated_answer = None
             vectorID = None
-
-        cursor.close()
 
         if updated_question is not None and updated_answer is not None:
             # Concatenate the updated question and answer to create faq_text
@@ -658,7 +619,7 @@ def editFAQData():
 
                 test_vector = test_bed['data'][0]['embedding']
 
-                # Query Pinecone for similar vectors
+                # Query Pinecone for similar vectors (Assuming INDEX_NAME is already defined)
                 index = pinecone.Index(INDEX_NAME)
                 index.update(id=vectorID, values=test_vector, set_metadata={'text': updated_faq_text})
 
@@ -671,12 +632,10 @@ def editFAQData():
     return "Invalid request"
 
 
-
-#Insert data from a FAQ
+# Insert data from a FAQ
 @app.route('/save-faq', methods=['POST'])
 def save_faq():
     if request.method == 'POST':
-        dataText = ""
         question = request.form['questions']
         answer = request.form['answers']
         dataSource = "FAQ"
@@ -696,20 +655,19 @@ def save_faq():
             answer = removeStyles(answer)
             # Append the FAQ to the text_data list
             faq_text = f"{faqQuestion}: {question} {faqAnswer}: {answer}"
-            text_data.append(faq_text)
+
+            # Assuming `embeddings` and `INDEX_NAME` are already defined
             text_store = Pinecone.from_texts([faq_text], embeddings, index_name=INDEX_NAME)
-            
+
             # Create an OpenAI embedding
             test_bed = openai.Embedding.create(
-                input=[
-                    faq_text
-                ],
+                input=[faq_text],
                 engine=EMBEDDING_MODEL
             )
 
             test_vector = test_bed['data'][0]['embedding']
 
-            # Query Pinecone for similar vectors
+            # Query Pinecone for similar vectors (Assuming INDEX_NAME is already defined)
             index = pinecone.Index(INDEX_NAME)
             data_from_pc = index.query(vector=test_vector, top_k=3, include_values=True)
             vectorID = data_from_pc['matches'][0]['id']
@@ -717,31 +675,32 @@ def save_faq():
             characters = len(faq_text)
             status = "Processed"
 
-            # Create a query to save in MySQL
-            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            cursor.execute("INSERT INTO tbldata (vectorID, dataSource, dataText, dataFAQQuestion, dataFAQAnswer, characters, status, office, dateAdded) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (vectorID, dataSource, dataText, question, removeStyles(answer), characters, status, office, dateAdded))
-            mysql.connection.commit()
-            cursor.close()
-            
-            # Insert "Processed" status into tbldocuments
-            cursor1 = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            cursor1.execute("INSERT INTO tbldocuments (status) VALUES (%s)", (status,))
-            mysql.connection.commit()
-            cursor1.close()
+            # Insert data into MongoDB
+            data_document = {
+                "vectorID": vectorID,
+                "dataSource": dataSource,
+                "dataFAQQuestion": question,
+                "dataFAQAnswer": answer,
+                "characters": characters,
+                "status": status,
+                "office": office,
+                "dateAdded": dateAdded
+            }
+            data_collection.insert_one(data_document)
+
+            # Insert "Processed" status into documents_collection
+            documents_collection.insert_one({"status": status})
 
             return jsonify({"message": "FAQ saved successfully"})
         
         except Exception as e:
-            # Handle exceptions and insert "Error" status into tbldocuments
+            # Handle exceptions and insert "Error" status into documents_collection
             status = "Error"
-            cursor1 = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            cursor1.execute("INSERT INTO tbldocuments (status) VALUES (%s)", (status,))
-            mysql.connection.commit()
-            cursor1.close()
+            documents_collection.insert_one({"status": status})
             return jsonify({"message": f"An error occurred: {str(e)}"})
         
     return "Invalid request"
-      
+
 index = pinecone.Index(INDEX_NAME)
 
 def find_match(input):
@@ -876,13 +835,6 @@ def dialogflow_webhook():
         end_time = datetime.now()
         # Calculate response time in seconds
         response_time = (end_time - start_time).total_seconds()
-
-        # Create a cursor and execute the SQL query 
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("INSERT INTO tblconversations (sessionID, incomingMessage, botMessage, responseTime, timestamp) VALUES (%s, %s, %s, %s, %s)",
-                       (sessionID, userQuery, botMessage, response_time, timestamp))
-        mysql.connection.commit()
-        cursor.close()
         
         #Save to MongoDB
         collection = db["conversations"]
@@ -981,13 +933,8 @@ def dialogflow_ratings():
         rating = "Unsatisfied"
     
     timestamp = datetime.today()
-    
-    # Create a cursor and execute the SQL query
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
     try:
-        cursor.execute("INSERT INTO tblratings (sessionID, rating, feedback, timestamp) VALUES (%s, %s, %s, %s)",
-                       (sessionID, rating, feedback, timestamp))
-        mysql.connection.commit()
         
         #Save to MongoDB
         collection = db["ratings"]

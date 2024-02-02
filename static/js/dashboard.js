@@ -366,6 +366,7 @@
       bar.text.style.fontSize = '0rem';
       bar.animate(.34); // Number from 0.0 to 1.0
     }
+    
     if ($("#marketingOverview").length) {
       var marketingOverviewChart = document.getElementById("marketingOverview").getContext('2d');
       var marketingOverviewData = {
@@ -458,6 +459,7 @@
       });
       document.getElementById('marketing-overview-legend').innerHTML = marketingOverview.generateLegend();
     }
+
     if ($("#marketingOverview-dark").length) {
       var marketingOverviewChartDark = document.getElementById("marketingOverview-dark").getContext('2d');
       var marketingOverviewDataDark = {

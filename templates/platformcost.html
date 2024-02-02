@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+<html>
+<body>
+{% block content%}
+    <div class="main-panel">
+        <div class="content-wrapper">
+            <div class="row">
+              <div class="col-12 col-lg-4 col-lg-12 grid-margin stretch-card">
+                <div class="card card-rounded">
+                  <div class="card-body">
+                    <div class="d-sm-flex justify-content-between align-items-start">
+                      <div>
+                       <h4 class="card-title card-title-dash">Platform Costing</h4>
+                       <h5 class="card-subtitle card-subtitle-dash">This bar chart provides the current platform cost based on the tokens.</h5>
+                       <p><strong>Note:</strong> The numbers displayed are approximate costs in dollars.</p>
+                      </div>
+                      <div id="marketing-overview-legend"><div class="chartjs-legend"></ul></div></div>
+                      <div>
+                        <div class="dropdown">
+                          <button class="btn btn-light dropdown-toggle toggle-dark btn-sm mb-0 me-0" type="button" id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <i class="icon-download"></i> Export </button>
+                          <div class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
+                            <a id="generateCSV" class="dropdown-item" href="#">CSV</a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="d-sm-flex justify-content-between align-items-start">
+                      <div class="row align-items-center">
+                        <div class="col-auto">
+                            <select id="yearSelect" class="form-select form-select-sm" aria-label="Select Year">
+                                <option selected disabled>Select Year</option>
+                            </select>
+                            <script>
+                                // Get the select element
+                                var select = document.getElementById("yearSelect");
+                                var currentYear = new Date().getFullYear();
+                    
+                                // Generate options for every year starting from 2023 to the current year
+                                for (var year = 2023; year <= currentYear; year++) {
+                                    var option = document.createElement("option");
+                                    option.text = year;
+                                    option.value = year;
+                                    select.appendChild(option);
+                                }
+                            </script>
+                        </div>
+                        <div class="col-auto">
+                            <button type="button" class="btn btn-outline-secondary btn-sm btn-rounded btn-icon" data-bs-toggle="modal" data-bs-target="#updatePlatform">
+                                <i class="ti-settings"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    </div>
+                    <div class="chartjs-bar-wrapper mt-3"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
+                      <canvas id="performanceBarChart" style="display: block; margin-top: 30px; height: 450px;" class="chartjs-render-monitor"></canvas>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+    </div>
+
+    <!--Settings Modal-->
+    <div class="modal fade" id="updatePlatform" tabindex="-1" aria-labelledby="ModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h5 class="modal-title" id="ModalLabel">Update Costing</h5>
+                  <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">×</span>
+                  </button>
+              </div>
+              <form method="POST" id="update-platform">
+                  <div class="modal-body" id="platformCosts">
+                      <!-- Service name and cost inputs will be added dynamically here -->
+                  </div>
+                  <div class="modal-footer">
+                      <button type="submit" class="btn btn-danger">Submit</button>
+                      <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                  </div>
+              </form>
+          </div>
+      </div>
+    </div>
+  
+{% endblock %}
+</body>
+
+{% block scripts %}
+
+<script>
+  $(document).ready(function() {
+      // Ajax request to fetch platform costs
+      $.ajax({
+          url: "/get-platform-cost",
+          type: "GET",
+          success: function(data) {
+              // Display platform costs
+              var platformCostsHTML = "";
+              data.forEach(function(item) {
+                  platformCostsHTML += `
+                      <div class="form-group">
+                        <label for="${item.name}">${item.name}:</label>
+                        <div class="input-group">
+                          <div class="input-group-prepend">
+                            <span class="input-group-text">$</span>
+                          </div>
+                          <input type="text" class="form-control" id="${item.name}-cost" aria-label="Amount (to the nearest dollar)" value="${item.cost}">
+                        </div>
+                      </div>
+                  `;
+              });
+              $("#platformCosts").html(platformCostsHTML);
+          },
+          error: function(xhr, status, error) {
+              console.error("Error fetching platform costs:", error);
+          }
+      });
+  });
+</script>
+
+
+<script>
+  $(document).ready(function() {
+    fetchPerformanceBarChart();
+
+    $('#yearSelect').change(function() {
+        fetchPerformanceBarChart($(this).val());
+    });
+
+    function fetchPerformanceBarChart(selectedYear) {
+        var url = '/get-platform-costing';
+        if (selectedYear) {
+            url += '?year=' + selectedYear;
+        }
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                updateBarChart(data);
+            })
+            .catch(error => console.error(error));
+    }
+});
+
+
+
+  function updateBarChart(data) {
+    var marketingOverviewChart = document.getElementById("performanceBarChart").getContext('2d');
+    var marketingOverviewData = {
+      labels: data.map(entry => entry.month),
+      datasets: [
+      {
+        label: 'GPT 3.5-Turbo',
+        data: data.map(entry => entry.gpt_cost), // Extracting total_cost from data
+        backgroundColor: "#F7B4BB",
+        borderColor: [
+            '#F7B4BB',
+        ],
+        borderWidth: 0,
+        fill: true, // 3: no fill
+      },
+      {
+        label: 'Dialogflow CX',
+        data: data.map(entry => entry.dialogflow_cost), // Extracting total_cost from data
+        backgroundColor: "#F46D75",
+        borderColor: [
+            '#F46D75',
+        ],
+        borderWidth: 0,
+        fill: true, // 3: no fill
+      },
+      {
+        label: 'Total Cost',
+        data: data.map(entry => entry.total_cost),
+        backgroundColor: "#BA0001",
+        borderColor: [
+            '#BA0001',
+        ],
+        borderWidth: 0,
+        fill: true, // 3: no fill
+          
+      }]
+  };
+
+  var marketingOverviewOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+      scales: {
+          yAxes: [{
+              gridLines: {
+                  display: true,
+                  drawBorder: false,
+                  color:"#F0F0F0",
+                  zeroLineColor: '#F0F0F0',
+              },
+              ticks: {
+                beginAtZero: true,
+                autoSkip: true,
+                maxTicksLimit: 5,
+                fontSize: 10,
+                color:"#6B778C"
+              }
+          }],
+          xAxes: [{
+            stacked: true,
+            barPercentage: 0.35,
+            gridLines: {
+                display: false,
+                drawBorder: false,
+            },
+            ticks: {
+              beginAtZero: false,
+              autoSkip: true,
+              maxTicksLimit: 12,
+              fontSize: 10,
+              color:"#6B778C"
+            }
+        }],
+      },
+      legend:false,
+      legendCallback: function (chart) {
+        var text = [];
+        text.push('<div class="chartjs-legend"><ul style="list-style-type: none;>');
+        for (var i = 0; i < chart.data.datasets.length; i++) {
+            console.log(chart.data.datasets[i]); // see what's inside the obj.
+            text.push('<li class="text-lg">');
+            text.push('<span style="background-color:' + chart.data.datasets[i].borderColor +  '; font-size: 16px; width: 10px; height: 10px; margin-right: 10px; border-radius: 30px; display: inline-block;"></span>');
+            text.push(chart.data.datasets[i].label);
+            text.push('</li>');
+        }
+        text.push('</ul></div>');
+        return text.join("");
+    },
+    
+      
+      elements: {
+          line: {
+              tension: 0.4,
+          }
+      },
+      tooltips: {
+          backgroundColor: 'rgba(31, 59, 179, 1)',
+      }
+  }
+  var marketingOverview = new Chart(marketingOverviewChart, {
+      type: 'bar',
+      data: marketingOverviewData,
+      options: marketingOverviewOptions
+  });
+    document.getElementById('marketing-overview-legend').innerHTML = marketingOverview.generateLegend();
+  }
+
+</script>
+
+
+<script>
+  // Function to trigger CSV generation
+  function generateCSV() {
+      // Get the selected year from the dropdown
+      var selectedYear = $('#yearSelect').val();
+
+      // Make an Ajax request to generate the CSV file for the selected year
+      $.ajax({
+          type: 'GET',
+          url: '/generate-platformcost-csv',
+          data: { year: selectedYear }, // Pass the selected year as a parameter
+          success: function(response) {
+              // Create a blob from the CSV data
+              var blob = new Blob([response], { type: 'text/csv' });
+
+              // Create a temporary URL for the blob
+              var url = window.URL.createObjectURL(blob);
+
+              // Trigger the download
+              var a = document.createElement('a');
+              a.href = url;
+              a.download = 'Platform Costing.csv';
+              document.body.appendChild(a);
+              a.click();
+
+              // Clean up by revoking the object URL
+              window.URL.revokeObjectURL(url);
+          },
+          error: function(xhr, status, error) {
+              // Handle error
+              console.error(error);
+              alert('Failed to generate CSV file. Please try again later.');
+          }
+      });
+  }
+
+  // Attach event listener to the button
+  $('#generateCSV').click(function(e) {
+      e.preventDefault(); // Prevent default link behavior
+      generateCSV();
+  });
+</script>
+
+
+
+</html>
+
+
+{% endblock %}
+
+</html>
