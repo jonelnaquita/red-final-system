@@ -1,6 +1,6 @@
 # Response and Engage Directly: Batangas State University's Website Personal Assistant Using Chatbot Application
 
-This repository contains the code and resources for the project "Response and Engage Directly: Batangas State University's Website Personal Assistant Using Chatbot Application." This project was developed as part of my capstone 2 in fulfillment of my Bachelor Degree. The system is designed to answer Frequently Asked Questions (FAQs) of students and stakeholders about the university.
+This repository contains the code and resources for the project "Response and Engage Directly: Batangas State University's Website Personal Assistant Using Chatbot Application." This project was developed as part of my Capstone 2 in fulfillment of my Bachelor Degree. The system is designed to answer Frequently Asked Questions (FAQs) of students and stakeholders about the university.
 
 ## Technologies and Tools
 
@@ -36,5 +36,5 @@ Ensure you have the following installed on your local machine:
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/bsu-chatbot.git
-   cd bsu-chatbot
+   git clone https://github.com/jonelnaquita/red-final-system.git
+   cd red-final-system
